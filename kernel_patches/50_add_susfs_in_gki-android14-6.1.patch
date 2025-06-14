@@ -357,7 +357,7 @@ index a4a660069352..4a903b6e4fa7 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 59a9f877738b..9e1cd7e06f54 100644
+index 57166cc7e511..ba65da724ec7 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,36 @@
@@ -647,7 +647,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  	lock_mount_hash();
  	list_add_tail(&mnt->mnt_instance, &sb->s_mounts);
  	unlock_mount_hash();
-@@ -1876,6 +2073,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+@@ -1877,6 +2074,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
  					int flag)
  {
  	struct mount *res, *p, *q, *r, *parent;
@@ -657,7 +657,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  
  	if (!(flag & CL_COPY_UNBINDABLE) && IS_MNT_UNBINDABLE(mnt))
  		return ERR_PTR(-EINVAL);
-@@ -1892,6 +2092,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+@@ -1893,6 +2093,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
  	p = mnt;
  	list_for_each_entry(r, &mnt->mnt_mounts, mnt_child) {
  		struct mount *s;
@@ -667,7 +667,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  		if (!is_subdir(r->mnt_mountpoint, dentry))
  			continue;
  
-@@ -1921,6 +2124,15 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+@@ -1922,6 +2125,15 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
  			q = clone_mnt(p, p->mnt.mnt_root, flag);
  			if (IS_ERR(q))
  				goto out;
@@ -683,7 +683,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  			lock_mount_hash();
  			list_add_tail(&q->mnt_list, &res->mnt_list);
  			attach_mnt(q, parent, p->mnt_mp);
-@@ -2455,6 +2667,27 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2456,6 +2668,27 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -711,7 +711,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3474,6 +3707,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3475,6 +3708,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	struct mount *old;
  	struct mount *new;
  	int copy_flags;
@@ -722,7 +722,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  
  	BUG_ON(!ns);
  
-@@ -3493,6 +3730,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3494,6 +3731,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
@@ -734,7 +734,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -3534,6 +3776,24 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3535,6 +3777,24 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  		while (p->mnt.mnt_root != q->mnt.mnt_root)
  			p = next_mnt(p, old);
  	}
@@ -759,7 +759,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  	namespace_unlock();
  
  	if (rootmnt)
-@@ -3606,6 +3866,13 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+@@ -3607,6 +3867,13 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
  
  	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
  
@@ -773,7 +773,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  	kfree(options);
  out_data:
  	kfree(kernel_dev);
-@@ -3828,6 +4095,13 @@ SYSCALL_DEFINE5(move_mount,
+@@ -3829,6 +4096,13 @@ SYSCALL_DEFINE5(move_mount,
  	path_put(&to_path);
  out_from:
  	path_put(&from_path);
@@ -787,7 +787,7 @@ index 59a9f877738b..9e1cd7e06f54 100644
  	return ret;
  }
  
-@@ -4740,3 +5014,37 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -4741,3 +5015,37 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
