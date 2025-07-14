@@ -12,10 +12,20 @@ index c7851875b668..e951f5487c35 100644
  obj-y +=	buffer.o block_dev.o direct-io.o mpage.o
  else
 diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
-index 4f25015aa534..555e4cb31e65 100644
+index 4f25015aa534..f1394c6915f1 100644
 --- a/fs/devpts/inode.c
 +++ b/fs/devpts/inode.c
-@@ -596,6 +596,11 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
+@@ -24,6 +24,9 @@
+ #include <linux/parser.h>
+ #include <linux/fsnotify.h>
+ #include <linux/seq_file.h>
++#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#include <linux/susfs_def.h>
++#endif
+ 
+ #define DEVPTS_DEFAULT_MODE 0600
+ /*
+@@ -596,6 +599,11 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
  	return dentry;
  }
  
@@ -27,29 +37,45 @@ index 4f25015aa534..555e4cb31e65 100644
  /**
   * devpts_get_priv -- get private data for a slave
   * @pts_inode: inode of the slave
-@@ -604,6 +609,12 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
+@@ -604,6 +612,16 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
   */
  void *devpts_get_priv(struct dentry *dentry)
  {
-+#if defined(CONFIG_KSU_SUSFS_SUS_SU)
++#ifdef CONFIG_KSU_SUSFS_SUS_SU
++	if (likely(susfs_is_current_proc_su_not_allowed())) {
++		goto orig_flow;
++	}
 +	if (likely(ksu_devpts_hook)) {
 +		ksu_handle_devpts(dentry->d_inode);
 +	}
++orig_flow:
 +#endif
 +
  	if (dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC)
  		return NULL;
  	return dentry->d_fsdata;
 diff --git a/fs/exec.c b/fs/exec.c
-index 9ac456e7913c..4a23a27ccaa3 100644
+index 9ac456e7913c..1c2986431c3f 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -1867,6 +1867,12 @@ static int bprm_execve(struct linux_binprm *bprm,
+@@ -66,6 +66,10 @@
+ #include <linux/io_uring.h>
+ 
+ #include <linux/uaccess.h>
++#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#include <linux/susfs_def.h>
++#endif
++
+ #include <asm/mmu_context.h>
+ #include <asm/tlb.h>
+ 
+@@ -1867,6 +1871,13 @@ static int bprm_execve(struct linux_binprm *bprm,
  	return retval;
  }
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
++extern bool __ksu_is_allow_uid(uid_t uid);
 +extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr, void *argv,
 +				void *envp, int *flags);
 +#endif
@@ -57,13 +83,20 @@ index 9ac456e7913c..4a23a27ccaa3 100644
  static int do_execveat_common(int fd, struct filename *filename,
  			      struct user_arg_ptr argv,
  			      struct user_arg_ptr envp,
-@@ -1878,6 +1884,11 @@ static int do_execveat_common(int fd, struct filename *filename,
+@@ -1878,6 +1889,18 @@ static int do_execveat_common(int fd, struct filename *filename,
  	if (IS_ERR(filename))
  		return PTR_ERR(filename);
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	if (likely(susfs_is_sus_su_hooks_enabled))
++	if (likely(susfs_is_current_proc_su_not_allowed())) {
++		goto orig_flow;
++	}
++	if (likely(susfs_is_sus_su_hooks_enabled) &&
++		unlikely(__ksu_is_allow_uid(current_uid().val)))
++	{
 +		ksu_handle_execveat_sucompat(&fd, &filename, &argv, &envp, &flags);
++	}
++orig_flow:
 +#endif
 +
  	/*
@@ -1068,15 +1101,26 @@ index 765b50aeadd2..28dac1b68473 100644
  			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
  			   inotify_mark_user_mask(mark));
 diff --git a/fs/open.c b/fs/open.c
-index 62b4ba54a3b0..0e4813e83029 100644
+index 62b4ba54a3b0..1d5d8cc1d74c 100644
 --- a/fs/open.c
 +++ b/fs/open.c
-@@ -395,6 +395,12 @@ static const struct cred *access_override_creds(void)
+@@ -32,6 +32,9 @@
+ #include <linux/ima.h>
+ #include <linux/dnotify.h>
+ #include <linux/compat.h>
++#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#include <linux/susfs_def.h>
++#endif
+ 
+ #include "internal.h"
+ #include <trace/hooks/syscall_check.h>
+@@ -395,6 +398,13 @@ static const struct cred *access_override_creds(void)
  	return old_cred;
  }
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
++extern bool __ksu_is_allow_uid(uid_t uid);
 +extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
 +			int *flags);
 +#endif
@@ -1084,14 +1128,20 @@ index 62b4ba54a3b0..0e4813e83029 100644
  static long do_faccessat(int dfd, const char __user *filename, int mode, int flags)
  {
  	struct path path;
-@@ -403,6 +409,12 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
+@@ -403,6 +413,18 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
  	unsigned int lookup_flags = LOOKUP_FOLLOW;
  	const struct cred *old_cred = NULL;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	if (likely(susfs_is_sus_su_hooks_enabled)) {
++	if (likely(susfs_is_current_proc_su_not_allowed())) {
++		goto orig_flow;
++	}
++	if (likely(susfs_is_sus_su_hooks_enabled) &&
++		unlikely(__ksu_is_allow_uid(current_uid().val)))
++	{
 +		ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
 +	}
++orig_flow:
 +#endif
 +
  	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
@@ -1754,7 +1804,7 @@ index 09e8ed7d4161..fe6c96984ae4 100644
  	if (error >= 0)
  		error = buf.error;
 diff --git a/fs/stat.c b/fs/stat.c
-index c6a2e10983f8..54cb812e463d 100644
+index c6a2e10983f8..3fa4d5d9bb9a 100644
 --- a/fs/stat.c
 +++ b/fs/stat.c
 @@ -17,6 +17,9 @@
@@ -1796,13 +1846,14 @@ index c6a2e10983f8..54cb812e463d 100644
  	stat->dev = inode->i_sb->s_dev;
  	stat->ino = inode->i_ino;
  	stat->mode = inode->i_mode;
-@@ -171,12 +189,27 @@ int vfs_fstat(int fd, struct kstat *stat)
+@@ -171,12 +189,34 @@ int vfs_fstat(int fd, struct kstat *stat)
   *
   * 0 will be returned on success, and a -ve error code if unsuccessful.
   */
 +
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
++extern bool __ksu_is_allow_uid(uid_t uid);
 +extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
 +#endif
 +
@@ -1817,14 +1868,20 @@ index c6a2e10983f8..54cb812e463d 100644
 +#endif
 +
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	if (likely(susfs_is_sus_su_hooks_enabled)) {
++	if (likely(susfs_is_current_proc_su_not_allowed())) {
++		goto orig_flow;
++	}
++	if (likely(susfs_is_sus_su_hooks_enabled) &&
++		unlikely(__ksu_is_allow_uid(current_uid().val)))
++	{
 +		ksu_handle_stat(&dfd, &filename, &flags);
 +	}
++orig_flow:
 +#endif
  
  	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT | AT_EMPTY_PATH |
  		      AT_STATX_SYNC_TYPE))
-@@ -195,7 +228,15 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
+@@ -195,7 +235,15 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
  		goto out;
  
  	error = vfs_getattr(&path, stat, request_mask, flags);
