@@ -1262,7 +1262,7 @@ index e429aadc359a..ae521316915e 100644
  	}
  
 diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
-index 49650e54d2f8..3bde01c1ce8e 100644
+index 49650e54d2f8..9518e9f53694 100644
 --- a/fs/proc_namespace.c
 +++ b/fs/proc_namespace.c
 @@ -12,12 +12,20 @@
@@ -1291,7 +1291,7 @@ index 49650e54d2f8..3bde01c1ce8e 100644
  	int err;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-+	if (unlikely(r->mnt.mnt_root->d_inode->i_mapping->flags & BIT_SUS_MOUNT) &&
++	if (unlikely(r->mnt_id >= DEFAULT_SUS_MNT_ID) &&
 +		(susfs_hide_sus_mnts_for_all_procs || !susfs_is_current_ksu_domain()))
 +		return 0;
 +#endif
@@ -1304,7 +1304,7 @@ index 49650e54d2f8..3bde01c1ce8e 100644
  	int err;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-+	if (unlikely(r->mnt.mnt_root->d_inode->i_mapping->flags & BIT_SUS_MOUNT) &&
++	if (unlikely(r->mnt_id >= DEFAULT_SUS_MNT_ID) &&
 +		(susfs_hide_sus_mnts_for_all_procs || !susfs_is_current_ksu_domain()))
 +		return 0;
 +#endif
@@ -1316,7 +1316,7 @@ index 49650e54d2f8..3bde01c1ce8e 100644
  	int err;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-+	if (unlikely(r->mnt.mnt_root->d_inode->i_mapping->flags & BIT_SUS_MOUNT) &&
++	if (unlikely(r->mnt_id >= DEFAULT_SUS_MNT_ID) &&
 +		(susfs_hide_sus_mnts_for_all_procs || !susfs_is_current_ksu_domain()))
 +		return 0;
 +#endif
