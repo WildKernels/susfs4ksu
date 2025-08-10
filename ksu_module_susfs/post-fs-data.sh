@@ -172,3 +172,11 @@ cat <<EOF >/dev/null
 #   KSU rescue mode if you encounter bootloop here.
 ksu_susfs umount_for_zygote_iso_service 1
 EOF
+
+#### Enable avc log spoofing to bypass 'su' domain detection via /proc/<pid> enumeration ####
+cat <<EOF >/dev/null
+ksu_susfs enable_avc_log_spoofing 1
+## disable it when users want to do some debugging with the permission issue or selinux issue ##
+#ksus_susfs enable_avc_log_spoofing 0
+EOF
+
