@@ -42,6 +42,7 @@
 #define CMD_SUSFS_SHOW_SUS_SU_WORKING_MODE 0x555e4
 #define CMD_SUSFS_IS_SUS_SU_READY 0x555f0
 #define CMD_SUSFS_SUS_SU 0x60000
+#define CMD_SUSFS_ENABLE_AVC_LOG_SPOOFING 0x60010
 
 #define SUSFS_MAX_LEN_PATHNAME 256
 #define SUSFS_MAX_LEN_MOUNT_TYPE_NAME 32
@@ -317,6 +318,13 @@ static void print_help(void) {
 	log("      |--> 1: (deprecated), disable the core ksu kprobe hooks and enable sus_su fifo driver\n");
 	log("      |--> 2: disable the core ksu kprobe hooks and enable sus_su just with non-kprobe hooks\n");
 	log("      |--> show_working_mode: show the current sus_su working mode, [0,1,2]\n");
+	log("\n");
+	log("    enable_avc_log_spoofing <0|1>\n");
+	log("      |--> 0: Disable spoofing the sus 'su' tcontext shown in avc log in kernel\n");
+	log("      |--> 1: Enable spoofing the sus tcontext 'su' with 'kernel' shown in avc log in kernel\n");
+	log("      * Important Note *\n");
+	log("      - It is set to '0' by default in kernel\n");
+	log("      - Enable this will sometimes make developers hard to identify the cause when they are debugging with some permission or selinux issue, so users are advised to disbale this when doing so.\n");
 	log("\n");
 }
 
@@ -782,6 +790,15 @@ int main(int argc, char *argv[]) {
 			print_help();
 			return 1;
 		}
+		return error;
+	// enable_avc_log_spoofing
+	} else if (argc == 3 && !strcmp(argv[1], "enable_avc_log_spoofing")) {
+		if (strcmp(argv[2], "0") && strcmp(argv[2], "1")) {
+			print_help();
+			return 1;
+		}
+		prctl(KERNEL_SU_OPTION, CMD_SUSFS_ENABLE_AVC_LOG_SPOOFING, atoi(argv[2]), NULL, &error);
+		PRT_MSG_IF_OPERATION_NOT_SUPPORTED(error, CMD_SUSFS_ENABLE_AVC_LOG_SPOOFING);
 		return error;
 	} else {
 		print_help();
