@@ -514,7 +514,7 @@ index 1fa36df7b667..e997ba39c615 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 211a81240680..5aacfd083c36 100644
+index 67d89ebb5044..ca8c510fe992 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,36 @@
@@ -839,7 +839,7 @@ index 211a81240680..5aacfd083c36 100644
  			lock_mount_hash();
  			list_add_tail(&q->mnt_list, &res->mnt_list);
  			attach_mnt(q, parent, p->mnt_mp);
-@@ -2453,6 +2664,27 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2457,6 +2668,27 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -867,7 +867,7 @@ index 211a81240680..5aacfd083c36 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3472,6 +3704,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3476,6 +3708,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	struct mount *old;
  	struct mount *new;
  	int copy_flags;
@@ -878,7 +878,7 @@ index 211a81240680..5aacfd083c36 100644
  
  	BUG_ON(!ns);
  
-@@ -3491,6 +3727,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3495,6 +3731,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
@@ -890,7 +890,7 @@ index 211a81240680..5aacfd083c36 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -3512,6 +3753,12 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3516,6 +3757,12 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	 */
  	p = old;
  	q = new;
@@ -903,7 +903,7 @@ index 211a81240680..5aacfd083c36 100644
  	while (p) {
  		q->mnt_ns = new_ns;
  		new_ns->mounts++;
-@@ -3529,6 +3776,15 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3533,6 +3780,15 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  		q = next_mnt(q, new);
  		if (!q)
  			break;
@@ -919,7 +919,7 @@ index 211a81240680..5aacfd083c36 100644
  		while (p->mnt.mnt_root != q->mnt.mnt_root)
  			p = next_mnt(p, old);
  	}
-@@ -3604,6 +3860,13 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+@@ -3608,6 +3864,13 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
  
  	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
  
@@ -933,7 +933,7 @@ index 211a81240680..5aacfd083c36 100644
  	kfree(options);
  out_data:
  	kfree(kernel_dev);
-@@ -3826,6 +4089,13 @@ SYSCALL_DEFINE5(move_mount,
+@@ -3830,6 +4093,13 @@ SYSCALL_DEFINE5(move_mount,
  	path_put(&to_path);
  out_from:
  	path_put(&from_path);
@@ -947,7 +947,7 @@ index 211a81240680..5aacfd083c36 100644
  	return ret;
  }
  
-@@ -4738,3 +5008,37 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -4742,3 +5012,37 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
