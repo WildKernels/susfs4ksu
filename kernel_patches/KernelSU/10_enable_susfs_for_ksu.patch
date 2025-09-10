@@ -285,7 +285,7 @@ index ba8b73f2..6ae5e3b9 100644
  }
 \ No newline at end of file
 diff --git a/kernel/core_hook.c b/kernel/core_hook.c
-index 760f3041..42477fb2 100644
+index 760f3041..eaaf2f69 100644
 --- a/kernel/core_hook.c
 +++ b/kernel/core_hook.c
 @@ -33,6 +33,10 @@
@@ -797,7 +797,7 @@ index 760f3041..42477fb2 100644
  	return appid < FIRST_APPLICATION_UID;
  }
  
-+static inline bool is_zygote_system_uid(uid_t uid)
++static inline bool is_some_system_uid(uid_t uid)
 +{
 +	return uid >= 1000 && uid < 10000;
 +}
@@ -872,7 +872,7 @@ index 760f3041..42477fb2 100644
  
 +#ifdef CONFIG_KSU_SUSFS
 +	bool is_zygote_child = susfs_is_sid_equal(old->security, susfs_zygote_sid);
-+	if (is_zygote_system_uid(new_uid.val) && is_zygote_child) {
++	if (is_some_system_uid(new_uid.val) && is_zygote_child) {
 +		if (ksu_is_allow_uid(new_uid.val)) {
 +			return 0;
 +		}
