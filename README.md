@@ -1,7 +1,7 @@
 ## Introduction ##
 This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan zuma kernel branch 16.0.0-sultan and 5ec1cff's KernelSU fork
 
-- Sultan kernel for zuma: https://github.com/kerneltoast/android_kernel_google_gs201
+- Sultan kernel for zuma: https://github.com/kerneltoast/android_kernel_google_zuma
 
 - 5ec1cff's KernelSU aka MKSU: https://github.com/5ec1cff/KernelSU
 
@@ -49,7 +49,7 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
 - KernelSU: https://github.com/tiann/KernelSU
 - KernelSU fork: https://github.com/5ec1cff/KernelSU
 - @Kartatz: for ideas and original commit from https://github.com/Dominium-Apum/kernel_xiaomi_chime/pull/1/commits/74f8d4ecacd343432bb8137b7e7fbe3fd9fef189
-- Sultan Kernel: https://github.com/kerneltoast/android_kernel_google_gs201
+- Sultan Kernel: https://github.com/kerneltoast/android_kernel_google_zuma
 
 ## Telegram ##
 - @simonpunk
