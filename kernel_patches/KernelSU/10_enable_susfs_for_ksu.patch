@@ -1,5 +1,5 @@
 diff --git a/kernel/Kconfig b/kernel/Kconfig
-index 67f177f4..e6172171 100644
+index 67f177f4..3cd7afb9 100644
 --- a/kernel/Kconfig
 +++ b/kernel/Kconfig
 @@ -16,4 +16,131 @@ config KSU_DEBUG
@@ -18,7 +18,7 @@ index 67f177f4..e6172171 100644
 +config KSU_SUSFS_SUS_PATH
 +    bool "Enable to hide suspicious path (NOT recommended)"
 +    depends on KSU_SUSFS
-+    default y
++    default n
 +    help
 +      - Allow hiding the user-defined path and all its sub-paths from various system calls.
 +      - Includes temp fix for the leaks of app path in /sdcard/Android/data directory.
@@ -57,7 +57,7 @@ index 67f177f4..e6172171 100644
 +config KSU_SUSFS_SUS_KSTAT
 +    bool "Enable to spoof suspicious kstat"
 +    depends on KSU_SUSFS
-+    default y
++    default n
 +    help
 +      - Allow spoofing the kstat of user-defined file/directory.
 +      - Effective only on zygote spawned user app process.
@@ -82,7 +82,7 @@ index 67f177f4..e6172171 100644
 +config KSU_SUSFS_SPOOF_UNAME
 +    bool "Enable to spoof uname"
 +    depends on KSU_SUSFS
-+    default y
++    default n
 +    help
 +      - Allow spoofing the string returned by uname syscall to user-defined string.
 +      - Effective on all processes.
@@ -113,7 +113,7 @@ index 67f177f4..e6172171 100644
 +config KSU_SUSFS_OPEN_REDIRECT
 +    bool "Enable to redirect a path to be opened with another path (experimental)"
 +    depends on KSU_SUSFS
-+    default y
++    default n
 +    help
 +      - Allow redirecting a target path to be opened with another user-defined path.
 +      - Effective only on processes with uid < 2000.
@@ -122,7 +122,7 @@ index 67f177f4..e6172171 100644
 +config KSU_SUSFS_SUS_SU
 +    bool "Enable SUS-SU in runtime temporarily"
 +    depends on KSU_SUSFS && KPROBES && HAVE_KPROBES && KPROBE_EVENTS
-+    default y
++    default n
 +    help
 +      - Allow user to enable or disable core ksu kprobes hooks temporarily in runtime. There are 2 working modes for sus_su.
 +      - Mode 0 (default): Disable sus_su, and enable ksu kprobe hooks for su instead.
@@ -135,7 +135,7 @@ index 67f177f4..e6172171 100644
 +
  endmenu
 diff --git a/kernel/Makefile b/kernel/Makefile
-index 9fec3ef3..8a190993 100644
+index 732ba2d9..09fed4c8 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
 @@ -51,4 +51,81 @@ ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
@@ -1204,14 +1204,14 @@ index 88f1e7d3..22d4b324 100644
  
  #endif
 diff --git a/kernel/sucompat.c b/kernel/sucompat.c
-index ae57becc..8ab08a3f 100644
+index e1efb073..ae3f264f 100644
 --- a/kernel/sucompat.c
 +++ b/kernel/sucompat.c
 @@ -9,6 +9,9 @@
  #include <linux/uaccess.h>
  #include <linux/version.h>
  #include <linux/sched/task_stack.h>
-+#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#ifdef CONFIG_KSU_SUSFS
 +#include <linux/susfs_def.h>
 +#endif
  
@@ -1255,13 +1255,13 @@ index ae57becc..8ab08a3f 100644
  {
 -	const char su[] = SU_PATH;
 -
-+#ifndef CONFIG_KSU_SUSFS_SUS_SU
++#ifndef CONFIG_KSU_SUSFS
  	if (!ksu_is_allow_uid(current_uid().val)) {
  		return 0;
  	}
 +#endif
  
-+#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#ifdef CONFIG_KSU_SUSFS
 +	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
@@ -1274,7 +1274,7 @@ index ae57becc..8ab08a3f 100644
  	return 0;
  }
  
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0) && defined(CONFIG_KSU_SUSFS_SUS_SU)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0) && defined(CONFIG_KSU_SUSFS)
 +struct filename* susfs_ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags) {
 +	struct filename *name = getname_flags(*filename_user, getname_statx_lookup_flags(*flags), NULL);
 +
@@ -1298,7 +1298,7 @@ index ae57becc..8ab08a3f 100644
 -	// const char sh[] = SH_PATH;
 -	const char su[] = SU_PATH;
 -
-+#ifndef CONFIG_KSU_SUSFS_SUS_SU
++#ifndef CONFIG_KSU_SUSFS
  	if (!ksu_is_allow_uid(current_uid().val)) {
  		return 0;
  	}
@@ -1308,7 +1308,7 @@ index ae57becc..8ab08a3f 100644
  		return 0;
  	}
  
-+#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#ifdef CONFIG_KSU_SUSFS
 +	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
@@ -1330,7 +1330,7 @@ index ae57becc..8ab08a3f 100644
  	if (likely(memcmp(filename->name, su, sizeof(su))))
  		return 0;
  
-+#ifndef CONFIG_KSU_SUSFS_SUS_SU
++#ifndef CONFIG_KSU_SUSFS
  	if (!ksu_is_allow_uid(current_uid().val))
  		return 0;
 +#endif
@@ -1347,7 +1347,7 @@ index ae57becc..8ab08a3f 100644
  {
 -	const char su[] = SU_PATH;
 +	//const char su[] = SU_PATH;
-+#ifdef CONFIG_KSU_SUSFS_SUS_SU
++#ifdef CONFIG_KSU_SUSFS
 +	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
@@ -1356,51 +1356,48 @@ index ae57becc..8ab08a3f 100644
  	if (unlikely(!filename_user))
  		return 0;
  
-+#ifndef CONFIG_KSU_SUSFS_SUS_SU
++#ifndef CONFIG_KSU_SUSFS
  	memset(path, 0, sizeof(path));
 +#endif
  	ksu_strncpy_from_user_nofault(path, *filename_user, sizeof(path));
  
  	if (likely(memcmp(path, su, sizeof(su))))
-@@ -285,3 +320,41 @@ void ksu_sucompat_exit()
+@@ -164,6 +199,33 @@ int ksu_handle_execve_sucompat(int *fd, const char __user **filename_user,
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_KSU_SUSFS
++int ksu_handle_devpts(struct inode *inode)
++{
++        if (!current->mm) {
++                return 0;
++        }
++
++        uid_t uid = current_uid().val;
++        if (uid % 100000 < 10000) {
++                // not untrusted_app, ignore it
++                return 0;
++        }
++
++        if (!ksu_is_allow_uid(uid))
++                return 0;
++
++        if (ksu_devpts_sid) {
++                struct inode_security_struct *sec = selinux_inode(inode);
++                if (sec) {
++                        sec->sid = ksu_devpts_sid;
++                }
++        }
++
++        return 0;
++}
++#endif
++
+ #ifdef CONFIG_KPROBES
+ 
+ static int faccessat_handler_pre(struct kprobe *p, struct pt_regs *regs)
+@@ -249,3 +311,4 @@ void ksu_sucompat_exit()
  	}
  #endif
  }
-+
-+#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+extern bool ksu_su_compat_enabled;
-+bool ksu_devpts_hook = false;
-+bool susfs_is_sus_su_hooks_enabled __read_mostly = false;
-+int susfs_sus_su_working_mode = 0;
-+
-+static bool ksu_is_su_kps_enabled(void) {
-+	for (int i = 0; i < ARRAY_SIZE(su_kps); i++) {
-+		if (su_kps[i]) {
-+			return true;
-+		}
-+	}
-+	return false;
-+}
-+
-+void ksu_susfs_disable_sus_su(void) {
-+	susfs_is_sus_su_hooks_enabled = false;
-+	ksu_devpts_hook = false;
-+	susfs_sus_su_working_mode = SUS_SU_DISABLED;
-+	// Re-enable the su_kps for user, users need to toggle off the kprobe hooks again in ksu manager if they want it disabled.
-+	if (!ksu_is_su_kps_enabled()) {
-+		ksu_sucompat_init();
-+		ksu_su_compat_enabled = true;
-+	}
-+}
-+
-+void ksu_susfs_enable_sus_su(void) {
-+	if (ksu_is_su_kps_enabled()) {
-+		ksu_sucompat_exit();
-+		ksu_su_compat_enabled = false;
-+	}
-+	susfs_is_sus_su_hooks_enabled = true;
-+	ksu_devpts_hook = true;
-+	susfs_sus_su_working_mode = SUS_SU_WITH_HOOKS;
-+}
-+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
 +
