@@ -277,7 +277,7 @@ index ba8b73f2..6ae5e3b9 100644
  }
 \ No newline at end of file
 diff --git a/kernel/core_hook.c b/kernel/core_hook.c
-index a63d34a7..a0c4f887 100644
+index a63d34a7..6d5cf210 100644
 --- a/kernel/core_hook.c
 +++ b/kernel/core_hook.c
 @@ -33,6 +33,10 @@
@@ -838,6 +838,23 @@ index a63d34a7..a0c4f887 100644
  {
  	struct path path;
  	int err = kern_path(mnt, 0, &path);
+@@ -551,11 +1030,11 @@ static void try_umount(const char *mnt, bool check_mnt, int flags)
+ 		return;
+ 	}
+ 
+-	if (path.dentry != path.mnt->mnt_root) {
+-		// it is not root mountpoint, maybe umounted by others already.
+-		path_put(&path);
+-		return;
+-	}
++	//if (path.dentry != path.mnt->mnt_root) {
++	//	// it is not root mountpoint, maybe umounted by others already.
++	//	path_put(&path);
++	//	return;
++	//}
+ 
+ 	// we are only interest in some specific mounts
+ 	if (check_mnt && !should_umount(&path)) {
 @@ -563,9 +1042,118 @@ static void try_umount(const char *mnt, bool check_mnt, int flags)
  		return;
  	}
