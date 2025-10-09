@@ -564,7 +564,7 @@ index 1fa36df7b..e997ba39c 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 59a9f8777..f0bd85b97 100644
+index 59a9f8777..0843bafa6 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,36 @@
@@ -822,15 +822,15 @@ index 59a9f8777..f0bd85b97 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -1101,7 +1301,38 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
+@@ -1101,7 +1301,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
  	struct mount *mnt;
  	int err;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-+	// - We do not check anymore if boot-completed stage is triggered
++	// - We do not check anymore for ksu process if boot-completed stage is triggered
 +	//   just to stop the performance loss
 +	if (susfs_is_boot_completed_triggered) {
-+		goto orig_flow;
++		goto skip_checking_for_ksu_proc;
 +	}
 +
 +	// First we must check for ksu process because of magic mount
@@ -845,13 +845,12 @@ index 59a9f8777..f0bd85b97 100644
 +		goto bypass_orig_flow;
 +	}
 +
++skip_checking_for_ksu_proc:
 +	// Lastly for other processes of which old->mnt_id == DEFAULT_KSU_MNT_ID, go assign fake mnt_id
 +	if (old->mnt_id == DEFAULT_KSU_MNT_ID) {
 +		mnt = susfs_alloc_sus_vfsmnt(old->mnt_devname);
 +		goto bypass_orig_flow;
 +	}
-+
-+orig_flow:
 +#endif
 +
  	mnt = alloc_vfsmnt(old->mnt_devname);
@@ -861,7 +860,7 @@ index 59a9f8777..f0bd85b97 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -2455,6 +2686,31 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2455,6 +2685,31 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -893,7 +892,7 @@ index 59a9f8777..f0bd85b97 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3493,6 +3749,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3493,6 +3748,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
@@ -903,7 +902,7 @@ index 59a9f8777..f0bd85b97 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -3606,6 +3865,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+@@ -3606,6 +3864,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
  
  	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
  
@@ -919,7 +918,7 @@ index 59a9f8777..f0bd85b97 100644
  	kfree(options);
  out_data:
  	kfree(kernel_dev);
-@@ -3828,6 +4096,15 @@ SYSCALL_DEFINE5(move_mount,
+@@ -3828,6 +4095,15 @@ SYSCALL_DEFINE5(move_mount,
  	path_put(&to_path);
  out_from:
  	path_put(&from_path);
@@ -935,7 +934,7 @@ index 59a9f8777..f0bd85b97 100644
  	return ret;
  }
  
-@@ -4740,3 +5017,37 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -4740,3 +5016,37 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
