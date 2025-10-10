@@ -877,9 +877,10 @@ void susfs_try_umount(uid_t target_uid) {
 #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
 void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
 	struct st_susfs_try_umount_list *new_list = NULL;
-	char *pathname = NULL, *dpath = NULL;
+	struct mount *mnt = real_mount(path->mnt);
+	char *pathname = NULL, *mnuntpoint_path = NULL, *dpath = NULL, *dpath_mountpoint;
 	size_t new_pathname_len = 0;
-
+	
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
 	if (path->dentry->d_inode->i_mapping->flags & BIT_SUS_KSTAT) {
 		SUSFS_LOGI("skip adding path to try_umount list as its inode is flagged BIT_SUS_KSTAT already\n");
@@ -887,18 +888,32 @@ void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
 	}
 #endif
 
-	pathname = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	pathname = kmalloc(PATH_MAX, GFP_KERNEL);
 	if (!pathname) {
-		SUSFS_LOGE("no enough memory\n");
+		SUSFS_LOGE("no enough memory for pathname\n");
 		return;
 	}
 
-	dpath = d_path(path, pathname, PAGE_SIZE);
-	if (!dpath) {
-		SUSFS_LOGE("dpath is NULL\n");
+	// Currently check if the parent dest mount is prefixed with "/mnt/vendor" on oneplus devices
+	mnuntpoint_path = kmalloc(PATH_MAX, GFP_KERNEL);
+	if (!mnuntpoint_path) {
+		SUSFS_LOGE("no enough memory for mnuntpoint_path\n");
 		goto out_free_pathname;
 	}
 
+	dpath = d_path(path, pathname, PATH_MAX);
+	if (!dpath) {
+		SUSFS_LOGE("dpath is NULL\n");
+		goto out_free_mnuntpoint_path;
+	}
+
+	dpath_mountpoint = dentry_path_raw(mnt->mnt_mountpoint, mnuntpoint_path, PATH_MAX);
+	if (!dpath_mountpoint) {
+		SUSFS_LOGE("dpath_mountpoint is NULL\n");
+		goto out_free_mnuntpoint_path;
+	}
+
+	SUSFS_LOGI("dpath: %s, dpath_mountpoint: %s\n", dpath, dpath_mountpoint);
 	// - Important to check if it is from a magic mount, if so, then we need only
 	//   the path which is directory only, others should be skipped.
 	// - We need to strip out "/debug_ramdisk/workdir" here since there will be
@@ -910,14 +925,21 @@ void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
 			*(dpath + new_pathname_len) = '\0';
 			goto add_to_new_list;
 		}
-		goto out_free_pathname;
+		if (!strncmp(dpath_mountpoint, "/mnt/vendor/", 12)) {
+			strncpy(dpath, "/mnt/vendor", 11);
+			new_pathname_len = strlen(dpath) - 22;
+			memmove(dpath+11, dpath+22, new_pathname_len);
+			*(dpath + 11 + new_pathname_len) = '\0';
+			goto add_to_new_list;
+		}
+		goto out_free_mnuntpoint_path;
 	}
 
 add_to_new_list:
 	new_list = kmalloc(sizeof(struct st_susfs_try_umount_list), GFP_KERNEL);
 	if (!new_list) {
 		SUSFS_LOGE("no enough memory\n");
-		goto out_free_pathname;
+		goto out_free_mnuntpoint_path;
 	}
 
 	strncpy(new_list->info.target_pathname, dpath, SUSFS_MAX_LEN_PATHNAME-1);
@@ -930,6 +952,8 @@ add_to_new_list:
 	spin_unlock(&susfs_spin_lock);
 	SUSFS_LOGI("target_pathname: '%s', ino: %lu, mnt_mode: %d, is successfully added to LH_TRY_UMOUNT_PATH\n",
 					new_list->info.target_pathname, path->dentry->d_inode->i_ino, new_list->info.mnt_mode);
+out_free_mnuntpoint_path:
+	kfree(mnuntpoint_path);
 out_free_pathname:
 	kfree(pathname);
 }
