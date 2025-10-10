@@ -913,7 +913,6 @@ void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
 		goto out_free_mnuntpoint_path;
 	}
 
-	SUSFS_LOGI("dpath: %s, dpath_mountpoint: %s\n", dpath, dpath_mountpoint);
 	// - Important to check if it is from a magic mount, if so, then we need only
 	//   the path which is directory only, others should be skipped.
 	// - We need to strip out "/debug_ramdisk/workdir" here since there will be
@@ -925,7 +924,13 @@ void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
 			*(dpath + new_pathname_len) = '\0';
 			goto add_to_new_list;
 		}
-		if (!strncmp(dpath_mountpoint, "/mnt/vendor/", 12)) {
+		// - The check here is just a hardcode check for some oneplus devices that
+		//   it has both /mnt/vendor/my_product and /my_product directory that shares
+		//   same inode which is likely a hardlink, and the pathname we retrieve here
+		//   always begins with "/my_product", but in mountinfo, they begin with
+		//   "/mnt/vendor/my_product" instead. So the temp solution is to prefix
+		//   "/mnt/vendor" to any path that begins with "/my_product"
+		if (!strcmp(dpath_mountpoint, "/my_product")) {
 			strncpy(dpath, "/mnt/vendor", 11);
 			new_pathname_len = strlen(dpath) - 22;
 			memmove(dpath+11, dpath+22, new_pathname_len);
