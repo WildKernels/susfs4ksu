@@ -641,7 +641,7 @@ index 5f45d9b2f84d..7bbc0b94067f 100644
  	if (IS_ERR(new_dentry))
  		goto exit4;
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 2d0231797d0d..921f5245f7dc 100644
+index 2d0231797d0d..7013065465d9 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,12 +32,38 @@
@@ -998,7 +998,7 @@ index 2d0231797d0d..921f5245f7dc 100644
  	return ret;
  }
  
-@@ -5060,3 +5321,38 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -5060,3 +5321,42 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
@@ -1017,6 +1017,10 @@ index 2d0231797d0d..921f5245f7dc 100644
 +	get_mnt_ns(mnt_ns);
 +	first_mnt_id = list_first_entry(&mnt_ns->list, struct mount, mnt_list)->mnt_id;
 +	list_for_each_entry(mnt, &mnt_ns->list, mnt_list) {
++		// It is very important that we don't reorder the sus mount if it is not umounted
++		if (mnt->mnt_id == DEFAULT_KSU_MNT_ID) {
++			continue;
++		}
 +		mnt->mnt.susfs_mnt_id_backup = mnt->mnt_id;
 +		mnt->mnt_id = first_mnt_id++;
 +	}
