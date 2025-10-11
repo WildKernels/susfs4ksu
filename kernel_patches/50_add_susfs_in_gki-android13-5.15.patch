@@ -515,7 +515,7 @@ index ce97b60fe557..418f4a9080a7 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 18d2d37f1e2f..699b89adf7d3 100644
+index 18d2d37f1e2f..bf2cb2a56cbe 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,36 @@
@@ -870,7 +870,7 @@ index 18d2d37f1e2f..699b89adf7d3 100644
  	return ret;
  }
  
-@@ -4654,3 +4915,37 @@ const struct proc_ns_operations mntns_operations = {
+@@ -4654,3 +4915,41 @@ const struct proc_ns_operations mntns_operations = {
  	.install	= mntns_install,
  	.owner		= mntns_owner,
  };
@@ -889,6 +889,10 @@ index 18d2d37f1e2f..699b89adf7d3 100644
 +	get_mnt_ns(mnt_ns);
 +	first_mnt_id = list_first_entry(&mnt_ns->list, struct mount, mnt_list)->mnt_id;
 +	list_for_each_entry(mnt, &mnt_ns->list, mnt_list) {
++		// It is very important that we don't reorder the sus mount if it is not umounted
++		if (mnt->mnt_id == DEFAULT_KSU_MNT_ID) {
++			continue;
++		}
 +		mnt->mnt.susfs_mnt_id_backup = mnt->mnt_id;
 +		mnt->mnt_id = first_mnt_id++;
 +	}
