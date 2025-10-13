@@ -539,7 +539,7 @@ index d9268226bff1..340cb472118a 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 2c44445fe6c5..7d8238ea2f1f 100644
+index 2c44445fe6c5..a698901af60a 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -30,10 +30,36 @@
@@ -568,7 +568,7 @@ index 2c44445fe6c5..7d8238ea2f1f 100644
 +bool susfs_is_auto_add_sus_ksu_default_mount_enabled = true;
 +#endif
 +#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
-+extern int susfs_auto_add_sus_bind_mount(const char *pathname, struct path *path_target);
++extern void susfs_auto_add_sus_bind_mount(const char *pathname, struct path *path_target);
 +bool susfs_is_auto_add_sus_bind_mount_enabled = true;
 +#endif
 +#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
