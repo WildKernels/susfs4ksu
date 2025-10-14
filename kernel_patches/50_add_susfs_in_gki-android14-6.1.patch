@@ -1105,7 +1105,7 @@ index 0894b354b..f80e126f7 100644
  		return -EINVAL;
  
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 77b3b1efe..2215a1408 100644
+index 77b3b1efe..d8284a2dd 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
 @@ -98,6 +98,9 @@
@@ -1133,7 +1133,7 @@ index 77b3b1efe..2215a1408 100644
  	while (count > 0) {
  		size_t this_len = min_t(size_t, count, PAGE_SIZE);
 +#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-+		vma = find_vma(mm, addr + count);
++		vma = find_vma(mm, addr);
 +		if (vma && vma->vm_file) {
 +			struct inode *inode = file_inode(vma->vm_file);
 +			if (unlikely(inode->i_mapping->flags & BIT_SUS_MAPS) && susfs_is_current_proc_umounted()) {
@@ -1309,7 +1309,7 @@ index 913bef0d2..df3e37c93 100644
  	show_fd_locks(m, file, files);
  	if (seq_has_overflowed(m))
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index ad5a36558..33a09f97a 100644
+index ad5a36558..4c08e6550 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
 @@ -21,6 +21,9 @@
@@ -1435,7 +1435,7 @@ index ad5a36558..33a09f97a 100644
  		if (end < start_vaddr || end > end_vaddr)
  			end = end_vaddr;
 +#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-+		vma = find_vma(mm, start_vaddr + count);
++		vma = find_vma(mm, start_vaddr);
 +		if (vma && vma->vm_file) {
 +			struct inode *inode = file_inode(vma->vm_file);
 +			if (unlikely(inode->i_mapping->flags & BIT_SUS_MAPS) && susfs_is_current_proc_umounted()) {
