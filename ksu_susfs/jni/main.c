@@ -321,7 +321,7 @@ static void print_help(void) {
 	log("      |--> show_working_mode: show the current sus_su working mode, [0,1,2]\n");
 	log("\n");
 	log("    add_sus_map </path/to/actual/library>\n");
-	log("      |--> Added path will be hidden from /proc/self/[maps|smaps|smaps_rollup|map_files|mem|pagemap]\n");
+	log("      |--> Added real file path which gets mmapped will be hidden from /proc/self/[maps|smaps|smaps_rollup|map_files|mem|pagemap]\n");
 	log("      |--> e.g., add_sus_map '/data/adb/modules/my_module/zygisk/arm64-v8a.so'\n");
 	log("      * Important Note *\n");
 	log("      - It does NOT support hiding for anon memory.\n");

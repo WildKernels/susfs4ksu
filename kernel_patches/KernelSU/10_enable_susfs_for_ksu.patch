@@ -1,5 +1,5 @@
 diff --git a/kernel/Kconfig b/kernel/Kconfig
-index 67f177f4..7e5bb933 100644
+index 67f177f4..29667d32 100644
 --- a/kernel/Kconfig
 +++ b/kernel/Kconfig
 @@ -16,4 +16,142 @@ config KSU_DEBUG
@@ -132,11 +132,11 @@ index 67f177f4..7e5bb933 100644
 +      - Only apps with root access granted by ksu manager are allowed to get root.
 +
 +config KSU_SUSFS_SUS_MAP
-+    bool "Enable to hide some libraries from different proc maps interfaces"
++    bool "Enable to hide some mmapped real file from different proc maps interfaces"
 +    depends on KSU_SUSFS
 +    default y
 +    help
-+      - Allow hiding libraries from /proc/<pid>/[maps|smaps|smaps_rollup|map_files|mem|pagemap]
++      - Allow hiding mmapped real file from /proc/<pid>/[maps|smaps|smaps_rollup|map_files|mem|pagemap]
 +      - It does NOT support hiding for anon memory.
 +      - It does NOT hide any inline hooks or plt hooks cause by the injected library itself.
 +      - It may not be able to evade detections by apps that implement a good injection detection.
