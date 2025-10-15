@@ -139,6 +139,11 @@ struct st_sus_su {
 struct st_susfs_sus_map {
 	char                             target_pathname[SUSFS_MAX_LEN_PATHNAME];
 };
+
+struct st_susfs_sus_map_list {
+	struct list_head                 list;
+	struct st_susfs_sus_map          info;
+};
 #endif
 
 /***********************/
@@ -193,6 +198,8 @@ int susfs_sus_su(struct st_sus_su* __user user_info);
 /* sus_map */
 #ifdef CONFIG_KSU_SUSFS_SUS_MAP
 int susfs_add_sus_map(struct st_susfs_sus_map* __user user_info);
+int susfs_add_sus_map_loop(struct st_susfs_sus_map* __user user_info);
+void susfs_run_sus_map_loop(uid_t uid);
 #endif
 
 int susfs_get_enabled_features(char __user* buf, size_t bufsize);
