@@ -1183,7 +1183,6 @@ out:
 
 /* sus_map */
 #ifdef CONFIG_KSU_SUSFS_SUS_MAP
-static LIST_HEAD(LH_SUS_MAP_LOOP);
 int susfs_add_sus_map(struct st_susfs_sus_map* __user user_info) {
 	struct st_susfs_sus_map info;
 	struct path path;
@@ -1214,93 +1213,6 @@ int susfs_add_sus_map(struct st_susfs_sus_map* __user user_info) {
 out_path_put_path:
 	path_put(&path);
 	return err;
-}
-
-int susfs_add_sus_map_loop(struct st_susfs_sus_map* __user user_info) {
-	struct st_susfs_sus_map_list *cursor = NULL, *temp = NULL;
-	struct st_susfs_sus_map_list *new_list = NULL;
-	struct st_susfs_sus_map info;
-	struct path path;
-	struct inode *inode = NULL;
-	char *resolved_pathname = NULL, *tmp_buf = NULL;
-	int err = 0;
-
-	err = copy_from_user(&info, user_info, sizeof(info));
-	if (err) {
-		SUSFS_LOGE("failed copying from userspace\n");
-		return err;
-	}
-
-	err = kern_path(info.target_pathname, 0, &path);
-	if (err) {
-		SUSFS_LOGE("Failed opening file '%s'\n", info.target_pathname);
-		return err;
-	}
-
-	tmp_buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!tmp_buf) {
-		err = -ENOMEM;
-		goto out_path_put_path;
-	}
-
-	resolved_pathname = d_path(&path, tmp_buf, PAGE_SIZE);
-	if (!resolved_pathname) {
-		err = -ENOMEM;
-		goto out_kfree_tmp_buf;
-	}
-
-	list_for_each_entry_safe(cursor, temp, &LH_SUS_MAP_LOOP, list) {
-		if (unlikely(!strcmp(cursor->info.target_pathname, resolved_pathname))) {
-			err = -EINVAL;
-			SUSFS_LOGE("target_pathname: '%s' is already added to LH_SUS_MAP_LOOP\n", info.target_pathname);
-			goto out_kfree_tmp_buf;
-		}
-	}
-
-	if (!path.dentry->d_inode) {
-		err = -EINVAL;
-		goto out_kfree_tmp_buf;
-	}
-	inode = d_inode(path.dentry);
-	spin_lock(&inode->i_lock);
-
-	new_list = kmalloc(sizeof(struct st_susfs_sus_map_list), GFP_KERNEL);
-	if (!new_list) {
-		err = -ENOMEM;
-		goto out_spin_unlock_inode;
-	}
-	strncpy(new_list->info.target_pathname, resolved_pathname, SUSFS_MAX_LEN_PATHNAME - 1);
-	INIT_LIST_HEAD(&new_list->list);
-	spin_lock(&susfs_spin_lock);
-	list_add_tail(&new_list->list, &LH_SUS_MAP_LOOP);
-	SUSFS_LOGI("target_pathname: '%s', is successfully added to LH_SUS_MAP_LOOP\n",
-				new_list->info.target_pathname);
-	spin_unlock(&susfs_spin_lock);
-
-out_spin_unlock_inode:
-	spin_unlock(&inode->i_lock);
-out_kfree_tmp_buf:
-	kfree(tmp_buf);
-out_path_put_path:
-	path_put(&path);
-	return err;
-}
-
-void susfs_run_sus_map_loop(uid_t uid) {
-	struct st_susfs_sus_map_list *cursor = NULL;
-	struct path path;
-	struct inode *inode;
-
-	list_for_each_entry(cursor, &LH_SUS_MAP_LOOP, list) {
-		if (!kern_path(cursor->info.target_pathname, 0, &path)) {
-			inode = path.dentry->d_inode;
-			spin_lock(&inode->i_lock);
-			set_bit(AS_FLAGS_SUS_MAP, &inode->i_mapping->flags);
-			spin_unlock(&inode->i_lock);
-			path_put(&path);
-			SUSFS_LOGI("re-flag '%s' as SUS_MAP for uid: %u\n", cursor->info.target_pathname, uid);
-		}
-	}
 }
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MAP
 
