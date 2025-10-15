@@ -1059,7 +1059,7 @@ index 39779f1ba4e1..4cc7c6a9de58 100644
  		return -EINVAL;
  
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 7624ae2c115c..33892a24be28 100644
+index 7624ae2c115c..f6208f4fb72e 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
 @@ -100,6 +100,9 @@
@@ -1087,7 +1087,7 @@ index 7624ae2c115c..33892a24be28 100644
  	while (count > 0) {
  		size_t this_len = min_t(size_t, count, PAGE_SIZE);
 +#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-+		vma = find_vma(mm, addr + count);
++		vma = find_vma(mm, addr);
 +		if (vma && vma->vm_file) {
 +			struct inode *inode = file_inode(vma->vm_file);
 +			if (unlikely(inode->i_mapping->flags & BIT_SUS_MAPS) && susfs_is_current_proc_umounted()) {
@@ -1217,7 +1217,7 @@ index 913bef0d2a36..df7eecf70a01 100644
  	/* show_fd_locks() never deferences files so a stale value is safe */
  	show_fd_locks(m, file, files);
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index d56513a56bae..2d45788841f2 100644
+index d56513a56bae..eed293d2c339 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
 @@ -21,6 +21,9 @@
@@ -1337,23 +1337,23 @@ index d56513a56bae..2d45788841f2 100644
  
  	if (!mm || !mmget_not_zero(mm))
  		goto out;
-@@ -1686,6 +1757,16 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
- 		/* overflow ? */
- 		if (end < start_vaddr || end > end_vaddr)
- 			end = end_vaddr;
+@@ -1691,6 +1762,16 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+ 			goto out_free;
+ 		ret = walk_page_range(mm, start_vaddr, end, &pagemap_ops, &pm);
+ 		mmap_read_unlock(mm);
 +#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-+		vma = find_vma(mm, start_vaddr + count);
++		vma = find_vma(mm, start_vaddr);
 +		if (vma && vma->vm_file) {
 +			struct inode *inode = file_inode(vma->vm_file);
 +			if (unlikely(inode->i_mapping->flags & BIT_SUS_MAPS) && susfs_is_current_proc_umounted()) {
-+				ret = -EFAULT;
-+				goto out_free;
++				pm.show_pfn = false;
++				pm.buffer->pme = 0;
 +			}
 +		}
 +#endif
- 		ret = mmap_read_lock_killable(mm);
- 		if (ret)
- 			goto out_free;
+ 		start_vaddr = end;
+ 
+ 		len = min(count, PM_ENTRY_BYTES * pm.pos);
 diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
 index 49650e54d2f8..6957a21713e2 100644
 --- a/fs/proc_namespace.c
