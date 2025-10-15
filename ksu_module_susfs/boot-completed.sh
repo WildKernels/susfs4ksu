@@ -41,3 +41,14 @@ cat <<EOF >/dev/null
 ## - ONLY USE THIS WHEN NECCESSARY !!! ##
 ksu_susfs add_sus_path_loop /sys/block/loop0
 EOF
+
+
+#### Hide the mmapped real file from various maps in /proc/self/ ####
+cat <<EOF >/dev/null
+## Hide some zygisk modules ##
+ksu_susfs add_sus_path /data/adb/modules/my_module/zygisk/arm64-v8a.so
+
+## Hide some map traces caused by some font module ##
+ksu_susfs add_sus_path /system/fonts/Roboto-Regular.ttf
+ksu_susfs add_sus_path /system/fonts/RobotoStatic-Regular.ttf
+EOF
