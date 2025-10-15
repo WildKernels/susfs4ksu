@@ -802,15 +802,18 @@ int main(int argc, char *argv[]) {
 	// add_sus_map
 	} else if (argc == 3 && !strcmp(argv[1], "add_sus_map")) {
 		struct st_susfs_sus_map info = {0};
-		struct stat sb;
 
-		if (get_file_stat(argv[2], &sb)) {
-			log("path '%s' not found, skip adding its ino\n", argv[2]);
-			return 1;
-		}
 		strncpy(info.target_pathname, argv[2], SUSFS_MAX_LEN_PATHNAME-1);
 		prctl(KERNEL_SU_OPTION, CMD_SUSFS_ADD_SUS_MAP, &info, NULL, &error);
 		PRT_MSG_IF_OPERATION_NOT_SUPPORTED(error, CMD_SUSFS_ADD_SUS_MAP);
+		return error;
+	// add_sus_map_loop
+	} else if (argc == 3 && !strcmp(argv[1], "add_sus_map_loop")) {
+		struct st_susfs_sus_map info = {0};
+
+		strncpy(info.target_pathname, argv[2], SUSFS_MAX_LEN_PATHNAME-1);
+		prctl(KERNEL_SU_OPTION, CMD_SUSFS_ADD_SUS_MAP_LOOP, &info, NULL, &error);
+		PRT_MSG_IF_OPERATION_NOT_SUPPORTED(error, CMD_SUSFS_ADD_SUS_MAP_LOOP);
 		return error;
 	// enable_avc_log_spoofing
 	} else if (argc == 3 && !strcmp(argv[1], "enable_avc_log_spoofing")) {
