@@ -1217,7 +1217,7 @@ index 913bef0d2a36..df7eecf70a01 100644
  	/* show_fd_locks() never deferences files so a stale value is safe */
  	show_fd_locks(m, file, files);
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index d56513a56bae..eed293d2c339 100644
+index d56513a56bae..669b897f94fd 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
 @@ -21,6 +21,9 @@
@@ -1306,7 +1306,7 @@ index d56513a56bae..eed293d2c339 100644
  	smap_gather_stats(vma, &mss, 0);
  
  	show_map_vma(m, vma);
-@@ -907,8 +963,20 @@ static int show_smaps_rollup(struct seq_file *m, void *v)
+@@ -907,7 +963,19 @@ static int show_smaps_rollup(struct seq_file *m, void *v)
  	hold_task_mempolicy(priv);
  
  	for (vma = priv->mm->mmap; vma;) {
@@ -1322,11 +1322,10 @@ index d56513a56bae..eed293d2c339 100644
  		smap_gather_stats(vma, &mss, 0);
 +#ifdef CONFIG_KSU_SUSFS_SUS_MAP
 +bypass_orig_flow:
- 		last_vma_end = vma->vm_end;
 +#endif
+ 		last_vma_end = vma->vm_end;
  
  		/*
- 		 * Release mmap_lock temporarily if someone wants to
 @@ -1635,6 +1703,9 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
  	unsigned long start_vaddr;
  	unsigned long end_vaddr;
