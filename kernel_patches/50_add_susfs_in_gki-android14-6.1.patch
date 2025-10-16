@@ -1309,7 +1309,7 @@ index 913bef0d2..df3e37c93 100644
  	show_fd_locks(m, file, files);
  	if (seq_has_overflowed(m))
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index ad5a36558..29932f97d 100644
+index ad5a36558..fdfd660f9 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
 @@ -21,6 +21,9 @@
@@ -1429,7 +1429,7 @@ index ad5a36558..29932f97d 100644
  
  	if (!mm || !mmget_not_zero(mm))
  		goto out;
-@@ -1911,6 +1983,16 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+@@ -1911,6 +1983,15 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
  			goto out_free;
  		ret = walk_page_range(mm, start_vaddr, end, &pagemap_ops, &pm);
  		mmap_read_unlock(mm);
@@ -1438,7 +1438,6 @@ index ad5a36558..29932f97d 100644
 +		if (vma && vma->vm_file) {
 +			struct inode *inode = file_inode(vma->vm_file);
 +			if (unlikely(inode->i_mapping->flags & BIT_SUS_MAPS) && susfs_is_current_proc_umounted()) {
-+				pm.show_pfn = false;
 +				pm.buffer->pme = 0;
 +			}
 +		}
