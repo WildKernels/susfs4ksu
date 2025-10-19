@@ -539,7 +539,7 @@ index 177914858150..03f4c0094e79 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index dd9980f3fd9b..6ca89e3cb72d 100644
+index dd9980f3fd9b..61daf0226eb5 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -30,10 +30,36 @@
@@ -915,8 +915,8 @@ index dd9980f3fd9b..6ca89e3cb72d 100644
 +		if (mnt->mnt_id == DEFAULT_KSU_MNT_ID) {
 +			continue;
 +		}
-+		mnt->mnt.susfs_mnt_id_backup = mnt->mnt_id;
-+		mnt->mnt_id = first_mnt_id++;
++		WRITE_ONCE(mnt->mnt.susfs_mnt_id_backup, READ_ONCE(mnt->mnt_id));
++		WRITE_ONCE(mnt->mnt_id, first_mnt_id++);
 +	}
 +	put_mnt_ns(mnt_ns);
 +}
