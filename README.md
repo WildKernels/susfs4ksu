@@ -22,6 +22,7 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
     * CONFIG_KSU_SUSFS_ENABLE_LOG
     * CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
     * CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+    * CONFIG_KSU_SUSFS_SUS_MAP
 
 - Users may enable the disabled features by themselves such as SUS_PATH, SUS_KSTAT, OPEN_REDIRECT, etc..
 
