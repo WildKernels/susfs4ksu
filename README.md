@@ -26,7 +26,7 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
 
 - Users may enable the disabled features by themselves such as SUS_PATH, SUS_KSTAT, OPEN_REDIRECT, etc..
 
-- Manually hooks ported from SUS_SU and offical KSU
+- Bypass the kprobe and tracepoint hooks used by the official KSU and MKSU, all susfs hooks are fully inlined now, including sucompat hooks.
 
 - Reverted the original uname spoof, a stock uname is already spoofed during compile time
 
