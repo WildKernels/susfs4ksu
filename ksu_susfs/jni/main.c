@@ -58,12 +58,6 @@
 #define __NEW_UTS_LEN 64
 #endif
 
-#define SUS_SU_BIN_PATH "/data/adb/ksu/bin/sus_su"
-#define SUS_SU_CONF_FILE_PATH "/data/adb/ksu/bin/sus_su_drv_path"
-#define SUS_SU_DISABLED 0 /* deprecated */
-#define SUS_SU_WITH_OVERLAY 1 /* deprecated */
-#define SUS_SU_WITH_HOOKS 2 /* deprecated */
-
 /* VM flags from linux kernel */
 #define VM_NONE		0x00000000
 #define VM_READ		0x00000001	/* currently active flags */
