@@ -62,9 +62,9 @@ cat <<EOF >/dev/null
 ##         busybox nsenter -t <pid_of_mnt_ns_the_target_dev_number_belongs_to> -m ksu_susfs add_sus_map <target_path>
 
 ## Hide some zygisk modules ##
-ksu_susfs add_sus_path /data/adb/modules/my_module/zygisk/arm64-v8a.so
+ksu_susfs add_sus_map /data/adb/modules/my_module/zygisk/arm64-v8a.so
 
-## Hide some map traces caused by some font module ##
-ksu_susfs add_sus_path /system/fonts/Roboto-Regular.ttf
-ksu_susfs add_sus_path /system/fonts/RobotoStatic-Regular.ttf
+## Hide some map traces caused by some font modules ##
+ksu_susfs add_sus_map /system/fonts/Roboto-Regular.ttf
+ksu_susfs add_sus_map /system/fonts/RobotoStatic-Regular.ttf
 EOF
