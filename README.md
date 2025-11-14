@@ -9,24 +9,23 @@
 ## Compatibility ##
 - The susfs kernel patches may differ for different kernel version or even on the same kernel version, you may need to create your own patches for your kernel.
 
-## Patch Instruction (For GKI Kernel only and building from official google artifacts) ##
+## Patch Instruction ##
 **- Prerequisite -**
-1. All susfs patches are based on the **original official KernelSU (the one from weishu)** with **latest release tag**, so you should clone his repo with **latest release tag** for a better patching result.
+1. All susfs patches are mainly based on the **original official KernelSU (the one from weishu)** with **tag / release tag**, so you should clone his repo with **tag / release tag** and clone this susfs branch with a **tag / release tag** or up to a commit message containing **"Bump version to vX.X.X"** to get a better patching result.
 2. SUSFS now supports AUTO_ADD_ features for Magick Mount KernelSU as long as you have `KSU_SUSFS_HAS_MAGIC_MOUNT` feature enabled.
 
 **- Apply SUSFS patches -**
-1. Make sure you follow the offical KSU guild here to clone and build the kernel with KSU: `https://kernelsu.org/guide/how-to-build.html`, the kernel root directory should be `$KERNEL_REPO/common`, you should run script to clone KSU in `$KERNEL_REPO`
-2. Clone the SUSFS repo with a tag or release version, as they are more stable in general.
-2. Run `cp ./kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch $KERNEL_REPO/KernelSU/`
-3. Run `cp ./kernel_patches/50_add_susfs_in_kernel-<kernel_version>.patch $KERNEL_REPO/common/`
-4. Run `cp ./kernel_patches/fs/* $KERNEL_REPO/common/fs/`
-5. Run `cp ./kernel_patches/include/linux/* $KERNEL_REPO/common/include/linux/`
-6. Run `cd $KERNEL_REPO/KernelSU` and then `patch -p1 < 10_enable_susfs_for_ksu.patch`
-7. Run `cd $KERNEL_REPO/common` and then `patch -p1 < 50_add_susfs_in_kernel.patch`, **if there are failed patches, you may try to patch them manually by yourself.**
-8. If you want to make your kernel support other KSU manager variant, you can add its own hash size and hash in `ksu_is_manager_apk()` function in `KernelSU/kernel/apk_sign.c`
-9. Make sure again to have `CONFIG_KSU` and `CONFIG_KSU_SUSFS` enabled before building the kernel, some other SUSFS feature may be disabled by default, you may enable/disable them via `menuconfig`, `kernel defconfig`, or change the `default [y|n]` option under each `config KSU_SUSFS_` option in `$KernelSU_repo/kernel/Kconfig` if you build with a new defconfig every time.
-10. If your kernel already has the **KSU non-kprobe hook patches** applied, then you have to **`DISABLE`** the `CONFIG_KSU_SUSFS_SUS_SU` option.
-11. If your KernelSU manager is using magic mount, then you should enable **`KSU_SUSFS_HAS_MAGIC_MOUNT`** option so that mounts can be handled by AUTO_ADD_ features.
+1. Make sure you follow the offical KSU guild here to clone and build the kernel with KSU: `https://kernelsu.org/guide/how-to-build.html`, the kernel root directory should be `$KERNEL_REPO/common`, you should run script to clone KernelSU in `$KERNEL_REPO`, **make sure you clone with a tag version**
+2. Clone this susfs branch with a **tag / release tag** or up to a commit message containing **"Bump version to vX.X.X"**, as they are more stable in general.
+3. Run `cp ./kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch $KERNEL_REPO/KernelSU/`
+4. Run `cp ./kernel_patches/50_add_susfs_in_kernel-<kernel_version>.patch $KERNEL_REPO/common/`
+5. Run `cp ./kernel_patches/fs/* $KERNEL_REPO/common/fs/`
+6. Run `cp ./kernel_patches/include/linux/* $KERNEL_REPO/common/include/linux/`
+7. Run `cd $KERNEL_REPO/KernelSU` and then `patch -p1 < 10_enable_susfs_for_ksu.patch`
+8. Run `cd $KERNEL_REPO/common` and then `patch -p1 < 50_add_susfs_in_kernel.patch`, **if there are failed patches, you may try to patch them manually by yourself.**
+9. If you want to make your kernel support other KSU manager variant, you can add its own hash size and hash in `ksu_is_manager_apk()` function in `KernelSU/kernel/apk_sign.c`
+10. Make sure again to have `CONFIG_KSU` and `CONFIG_KSU_SUSFS` enabled before building the kernel, some other SUSFS feature may be disabled by default, you may enable/disable them via `menuconfig`, `kernel defconfig`, or change the `default [y|n]` option under each `config KSU_SUSFS_` option in `$KernelSU_repo/kernel/Kconfig` if you build with a new defconfig every time.
+11. If your kernel already has the **KSU non-kprobe hook patches** applied, then you have to **`DISABLE`** the `CONFIG_KSU_SUSFS_SUS_SU` option.
 12. For `gki kernel android14` or above, if you are building from google artifacts, it is necessary to delete the file `$KERNEL_REPO/common/android/abi_gki_protected_exports_aarch64` and `$KERNEL_REPO/common/android/abi_gki_protected_exports_x86_64`, otherwise some modules like WiFi will not work. Or you can just remove those files whenever they exist in your kernel repo.
 13. If you want to flash the fresh built gki boot.img, then before you build the kernel, first you need to fix or hardcode the `local spl_date` in function `build_gki_boot_images()` in `$KERNEL_REPO/build/kernel/build_utils.sh` to match the current boot security patch level of your phone. Or you can just use magiskboot to unpack and repack the built kernel for your stock boot.img.
 14. Build and flash the kernel.
@@ -88,6 +87,8 @@
 - Some of the File Explorer Apps cannot display a files/directory properly when a specific sub path of '/sdcard' or '/storage/emulated/0' is added to sus_path
     1. Make sure the file explorer app has root allowed by KSU manager, because sus_path is only effective on no root allowed process uid.
     2. It is strongly NOT recommended adding sub path of '/sdcard' or '/storage/emulated/0' to sus_path, because file explorer app is likely using android API to retrieve the list of files/directory, which means the calling uid will be changed to other system media provider app such as the google provider to execute the file lookup operation, and makes sus_path think that it is not a root allowed process uid so as to prevent them from showing up, unless the app obtains the root access first then use root privilege to list the files/directories without using android API.
+
+- If your KernelSU manager is using magic mount, susfs may not be able to capture all the sus mounts mounted by KSU, in this situation, users are advised to inspect which mounts are leaking and then manually add them via `ksu_susfs add_try_umount <leaked_mount_path> 1`.
 
 ## Credits ##
 - KernelSU: https://github.com/tiann/KernelSU
