@@ -1,21 +1,22 @@
 
 diff --git a/drivers/input/input.c b/drivers/input/input.c
-index 9bb1d3de723e..415fb7befec7 100644
+index 9bb1d3de723e..820d16cb2dae 100644
 --- a/drivers/input/input.c
 +++ b/drivers/input/input.c
-@@ -391,6 +391,11 @@ static void input_event_dispose(struct input_dev *dev, int disposition,
+@@ -391,6 +391,12 @@ static void input_event_dispose(struct input_dev *dev, int disposition,
  	}
  }
  
 +#ifdef CONFIG_KSU_SUSFS
 +extern bool ksu_input_hook __read_mostly;
-+extern int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code, int *value);
++extern __attribute__((cold)) int ksu_handle_input_handle_event(
++			unsigned int *type, unsigned int *code, int *value);
 +#endif
 +
  void input_handle_event(struct input_dev *dev,
  			unsigned int type, unsigned int code, int value)
  {
-@@ -399,6 +404,10 @@ void input_handle_event(struct input_dev *dev,
+@@ -399,6 +405,10 @@ void input_handle_event(struct input_dev *dev,
  	lockdep_assert_held(&dev->event_lock);
  
  	disposition = input_get_disposition(dev, type, code, &value);
@@ -26,31 +27,6 @@ index 9bb1d3de723e..415fb7befec7 100644
  	if (disposition != INPUT_IGNORE_EVENT) {
  		if (type != EV_SYN)
  			add_input_randomness(type, code, value);
-@@ -407,6 +416,12 @@ void input_handle_event(struct input_dev *dev,
- 	}
- }
- 
-+#ifdef CONFIG_KSU_SUSFS
-+extern bool ksu_input_hook __read_mostly;
-+extern __attribute__((cold)) int ksu_handle_input_handle_event(
-+			unsigned int *type, unsigned int *code, int *value);
-+#endif
-+
- /**
-  * input_event() - report new input event
-  * @dev: device that generated the event
-@@ -429,6 +444,11 @@ void input_event(struct input_dev *dev,
- {
- 	unsigned long flags;
- 
-+#ifdef CONFIG_KSU_SUSFS
-+	if (unlikely(ksu_input_hook))
-+		ksu_handle_input_handle_event(&type, &code, &value);
-+#endif
-+
- 	if (is_event_supported(type, dev->evbit, EV_MAX)) {
- 
- 		spin_lock_irqsave(&dev->event_lock, flags);
 diff --git a/fs/Makefile b/fs/Makefile
 index c6963a9a4d0a..e27ac368bbb4 100644
 --- a/fs/Makefile
