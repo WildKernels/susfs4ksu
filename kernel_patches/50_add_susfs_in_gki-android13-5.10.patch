@@ -2139,20 +2139,10 @@ index 96505113b907..a7ab0c818ec0 100644
  }
  
 diff --git a/kernel/reboot.c b/kernel/reboot.c
-index c1df842fb884..244da1019891 100644
+index c1df842fb884..6e814b360cea 100644
 --- a/kernel/reboot.c
 +++ b/kernel/reboot.c
-@@ -17,6 +17,9 @@
- #include <linux/syscalls.h>
- #include <linux/syscore_ops.h>
- #include <linux/uaccess.h>
-+#ifdef CONFIG_KSU_SUSFS
-+#include <linux/susfs.h>
-+#endif // #ifdef CONFIG_KSU_SUSFS
- 
- /*
-  * this indicates whether you can reboot with ctrl-alt-del: the default is yes
-@@ -302,6 +305,9 @@ EXPORT_SYMBOL_GPL(kernel_power_off);
+@@ -302,6 +302,9 @@ EXPORT_SYMBOL_GPL(kernel_power_off);
  
  DEFINE_MUTEX(system_transition_mutex);
  
@@ -2162,7 +2152,7 @@ index c1df842fb884..244da1019891 100644
  /*
   * Reboot system call: for obvious reasons only root may call it,
   * and even root needs to set up some magic numbers in the registers
-@@ -317,6 +323,15 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
+@@ -317,6 +320,15 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
  	char buffer[256];
  	int ret = 0;
  
