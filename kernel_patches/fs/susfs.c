@@ -462,7 +462,7 @@ bool susfs_is_inode_sus_path(struct inode *inode) {
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 bool susfs_hide_sus_mnts_for_all_procs = true; // hide sus mounts for all processes by default
 static LIST_HEAD(LH_SUS_MOUNT);
-extern void susfs_assigne_fake_mnt_id(struct mount *mnt);
+extern void susfs_assign_fake_mnt_id(struct mount *mnt);
 
 void susfs_add_sus_mount(void __user **user_info) {
 	struct st_susfs_sus_mount info = {0};
@@ -495,7 +495,7 @@ void susfs_add_sus_mount(void __user **user_info) {
 	}
 
 	SUSFS_LOGI("Assigning fake mnt_id and mnt_group_id for mnt '%s'\n", info.target_pathname);
-	susfs_assigne_fake_mnt_id(mnt);
+	susfs_assign_fake_mnt_id(mnt);
 
 	inode = d_inode(p.dentry);
 	if (!inode) {
