@@ -544,7 +544,7 @@ index 1fa36df7b..e997ba39c 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 59a9f8777..cae3532a6 100644
+index 59a9f8777..d7cb3f17c 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,36 @@
@@ -928,7 +928,7 @@ index 59a9f8777..cae3532a6 100644
 +	put_mnt_ns(mnt_ns);
 +}
 +
-+void susfs_assign_fake_mnt_id(struct mount *mnt) {
++void susfs_assigne_fake_mnt_id(struct mount *mnt) {
 +	lock_mount_hash();
 +
 +	ida_free(&mnt_id_ida, mnt->mnt_id);
