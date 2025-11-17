@@ -1628,7 +1628,7 @@ index eaaf755c43b5..06c90351606e 100644
  }
  
 diff --git a/fs/readdir.c b/fs/readdir.c
-index 6d29cab8576e..ba28f0763e90 100644
+index 6d29cab8576e..a35a7e84f112 100644
 --- a/fs/readdir.c
 +++ b/fs/readdir.c
 @@ -22,6 +22,14 @@
@@ -1710,16 +1710,16 @@ index 6d29cab8576e..ba28f0763e90 100644
  		return -EBADF;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+	buf.sb = f.file->f_inode->i_sb;
-+	inode = f.file->f_path.dentry->d_inode;
-+	if (f.file->f_path.dentry && inode) {
-+		if (susfs_is_base_dentry_android_data_dir(f.file->f_path.dentry))
++	buf.sb = fd_file(f)->f_inode->i_sb;
++	inode = fd_file(f)->f_path.dentry->d_inode;
++	if (fd_file(f)->f_path.dentry && inode) {
++		if (susfs_is_base_dentry_android_data_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_android_data_root_dir = true;
 +			buf.is_base_dentry_sdcard_root_dir = false;
 +			goto orig_flow;
 +		}
-+		if (susfs_is_base_dentry_sdcard_dir(f.file->f_path.dentry))
++		if (susfs_is_base_dentry_sdcard_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_sdcard_root_dir = true;
 +			buf.is_base_dentry_android_data_root_dir = false;
@@ -1729,7 +1729,7 @@ index 6d29cab8576e..ba28f0763e90 100644
 +	buf.is_base_dentry_android_data_root_dir = false;
 +	buf.is_base_dentry_sdcard_root_dir = false;
 +orig_flow:
-+	buf.idmap = mnt_idmap(f.file->f_path.mnt);
++	buf.idmap = mnt_idmap(fd_file(f)->f_path.mnt);
 +#endif
 +
  	error = iterate_dir(fd_file(f), &buf.ctx);
@@ -1801,16 +1801,16 @@ index 6d29cab8576e..ba28f0763e90 100644
  		return -EBADF;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+	buf.sb = f.file->f_inode->i_sb;
-+	inode = f.file->f_path.dentry->d_inode;
-+	if (f.file->f_path.dentry && inode) {
-+		if (susfs_is_base_dentry_android_data_dir(f.file->f_path.dentry))
++	buf.sb = fd_file(f)->f_inode->i_sb;
++	inode = fd_file(f)->f_path.dentry->d_inode;
++	if (fd_file(f)->f_path.dentry && inode) {
++		if (susfs_is_base_dentry_android_data_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_android_data_root_dir = true;
 +			buf.is_base_dentry_sdcard_root_dir = false;
 +			goto orig_flow;
 +		}
-+		if (susfs_is_base_dentry_sdcard_dir(f.file->f_path.dentry))
++		if (susfs_is_base_dentry_sdcard_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_sdcard_root_dir = true;
 +			buf.is_base_dentry_android_data_root_dir = false;
@@ -1820,7 +1820,7 @@ index 6d29cab8576e..ba28f0763e90 100644
 +	buf.is_base_dentry_android_data_root_dir = false;
 +	buf.is_base_dentry_sdcard_root_dir = false;
 +orig_flow:
-+	buf.idmap = mnt_idmap(f.file->f_path.mnt);
++	buf.idmap = mnt_idmap(fd_file(f)->f_path.mnt);
 +#endif
 +
  	error = iterate_dir(fd_file(f), &buf.ctx);
@@ -1892,16 +1892,16 @@ index 6d29cab8576e..ba28f0763e90 100644
  		return -EBADF;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+	buf.sb = f.file->f_inode->i_sb;
-+	inode = f.file->f_path.dentry->d_inode;
-+	if (f.file->f_path.dentry && inode) {
-+		if (susfs_is_base_dentry_android_data_dir(f.file->f_path.dentry))
++	buf.sb = fd_file(f)->f_inode->i_sb;
++	inode = fd_file(f)->f_path.dentry->d_inode;
++	if (fd_file(f)->f_path.dentry && inode) {
++		if (susfs_is_base_dentry_android_data_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_android_data_root_dir = true;
 +			buf.is_base_dentry_sdcard_root_dir = false;
 +			goto orig_flow;
 +		}
-+		if (susfs_is_base_dentry_sdcard_dir(f.file->f_path.dentry))
++		if (susfs_is_base_dentry_sdcard_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_sdcard_root_dir = true;
 +			buf.is_base_dentry_android_data_root_dir = false;
@@ -1911,7 +1911,7 @@ index 6d29cab8576e..ba28f0763e90 100644
 +	buf.is_base_dentry_android_data_root_dir = false;
 +	buf.is_base_dentry_sdcard_root_dir = false;
 +orig_flow:
-+	buf.idmap = mnt_idmap(f.file->f_path.mnt);
++	buf.idmap = mnt_idmap(fd_file(f)->f_path.mnt);
 +#endif
 +
  	error = iterate_dir(fd_file(f), &buf.ctx);
@@ -1981,16 +1981,16 @@ index 6d29cab8576e..ba28f0763e90 100644
  		return -EBADF;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+	buf.sb = f.file->f_inode->i_sb;
-+	inode = f.file->f_path.dentry->d_inode;
-+	if (f.file->f_path.dentry && inode) {
-+		if (susfs_is_base_dentry_android_data_dir(f.file->f_path.dentry))
++	buf.sb = fd_file(f)->f_inode->i_sb;
++	inode = fd_file(f)->f_path.dentry->d_inode;
++	if (fd_file(f)->f_path.dentry && inode) {
++		if (susfs_is_base_dentry_android_data_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_android_data_root_dir = true;
 +			buf.is_base_dentry_sdcard_root_dir = false;
 +			goto orig_flow;
 +		}
-+		if (susfs_is_base_dentry_sdcard_dir(f.file->f_path.dentry))
++		if (susfs_is_base_dentry_sdcard_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_sdcard_root_dir = true;
 +			buf.is_base_dentry_android_data_root_dir = false;
@@ -2000,7 +2000,7 @@ index 6d29cab8576e..ba28f0763e90 100644
 +	buf.is_base_dentry_android_data_root_dir = false;
 +	buf.is_base_dentry_sdcard_root_dir = false;
 +orig_flow:
-+	buf.idmap = mnt_idmap(f.file->f_path.mnt);
++	buf.idmap = mnt_idmap(fd_file(f)->f_path.mnt);
 +#endif
 +
  	error = iterate_dir(fd_file(f), &buf.ctx);
@@ -2071,16 +2071,16 @@ index 6d29cab8576e..ba28f0763e90 100644
  		return -EBADF;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+	buf.sb = f.file->f_inode->i_sb;
-+	inode = f.file->f_path.dentry->d_inode;
-+	if (f.file->f_path.dentry && inode) {
-+		if (susfs_is_base_dentry_android_data_dir(f.file->f_path.dentry))
++	buf.sb = fd_file(f)->f_inode->i_sb;
++	inode = fd_file(f)->f_path.dentry->d_inode;
++	if (fd_file(f)->f_path.dentry && inode) {
++		if (susfs_is_base_dentry_android_data_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_android_data_root_dir = true;
 +			buf.is_base_dentry_sdcard_root_dir = false;
 +			goto orig_flow;
 +		}
-+		if (susfs_is_base_dentry_sdcard_dir(f.file->f_path.dentry))
++		if (susfs_is_base_dentry_sdcard_dir(fd_file(f)->f_path.dentry))
 +		{
 +			buf.is_base_dentry_sdcard_root_dir = true;
 +			buf.is_base_dentry_android_data_root_dir = false;
@@ -2090,7 +2090,7 @@ index 6d29cab8576e..ba28f0763e90 100644
 +	buf.is_base_dentry_android_data_root_dir = false;
 +	buf.is_base_dentry_sdcard_root_dir = false;
 +orig_flow:
-+	buf.idmap = mnt_idmap(f.file->f_path.mnt);
++	buf.idmap = mnt_idmap(fd_file(f)->f_path.mnt);
 +#endif
 +
  	error = iterate_dir(fd_file(f), &buf.ctx);
