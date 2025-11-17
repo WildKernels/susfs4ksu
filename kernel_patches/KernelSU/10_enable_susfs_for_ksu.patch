@@ -243,7 +243,7 @@ index 645455e1..18637462 100644
 +endif
  # Keep a new line here!! Because someone may append config
 diff --git a/kernel/allowlist.c b/kernel/allowlist.c
-index 7b4d7e14..70463180 100644
+index 4fa59133..de729dff 100644
 --- a/kernel/allowlist.c
 +++ b/kernel/allowlist.c
 @@ -17,7 +17,9 @@
@@ -268,7 +268,7 @@ index 7b4d7e14..70463180 100644
  
      return result;
 diff --git a/kernel/apk_sign.c b/kernel/apk_sign.c
-index aea8e425..515bf402 100644
+index c7e23089..6d0bfc84 100644
 --- a/kernel/apk_sign.c
 +++ b/kernel/apk_sign.c
 @@ -314,5 +314,10 @@ module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
@@ -520,7 +520,7 @@ index 2369abbc..4636ad2f 100644
 +#endif // #ifndef CONFIG_KSU_SUSFS
  }
 diff --git a/kernel/kernel_umount.c b/kernel/kernel_umount.c
-index 9b3a2615..2957b849 100644
+index fb5a95bf..5ef03c5e 100644
 --- a/kernel/kernel_umount.c
 +++ b/kernel/kernel_umount.c
 @@ -17,7 +17,11 @@
