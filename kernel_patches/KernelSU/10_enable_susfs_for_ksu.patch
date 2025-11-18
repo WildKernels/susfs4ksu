@@ -520,7 +520,7 @@ index 2369abbc..4636ad2f 100644
 +#endif // #ifndef CONFIG_KSU_SUSFS
  }
 diff --git a/kernel/kernel_umount.c b/kernel/kernel_umount.c
-index fb5a95bf..5ef03c5e 100644
+index fb5a95bf..d33b2aff 100644
 --- a/kernel/kernel_umount.c
 +++ b/kernel/kernel_umount.c
 @@ -17,7 +17,11 @@
@@ -581,7 +581,7 @@ index fb5a95bf..5ef03c5e 100644
  {
      struct path path;
      int err = kern_path(mnt, 0, &path);
-@@ -88,9 +111,29 @@ static void try_umount(const char *mnt, bool check_mnt, int flags)
+@@ -88,9 +111,23 @@ static void try_umount(const char *mnt, bool check_mnt, int flags)
          return;
      }
  
@@ -597,21 +597,31 @@ index fb5a95bf..5ef03c5e 100644
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 +void susfs_try_umount_all(void) {
 +    susfs_try_umount();
-+    try_umount("/odm", true, 0);
-+    try_umount("/system", true, 0);
-+    try_umount("/vendor", true, 0);
-+    try_umount("/product", true, 0);
-+    try_umount("/system_ext", true, 0);
-+    try_umount("/data/adb/modules", false, MNT_DETACH);
 +    try_umount("/debug_ramdisk", true, MNT_DETACH);
 +}
 +#endif // #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 +
-+#ifndef CONFIG_KSU_SUSFS
++#if !defined(CONFIG_KSU_SUSFS) || !defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
  struct umount_tw {
      struct callback_head cb;
      const struct cred *old_cred;
-@@ -173,6 +216,7 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+@@ -126,6 +163,7 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+ {
+     struct umount_tw *tw;
+ 
++#if defined(CONFIG_KSU_SUSFS) || !defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
+     // this hook is used for umounting overlayfs for some uid, if there isn't any module mounted, just ignore it!
+     if (!ksu_module_mounted) {
+         return 0;
+@@ -152,6 +190,7 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+         pr_info("handle umount ignore non zygote child: %d\n", current->pid);
+         return 0;
+     }
++#endif // #if defined(CONFIG_KSU_SUSFS) || !defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
+     // umount the target mnt
+     pr_info("handle umount for uid: %d, pid: %d\n", new_uid, current->pid);
+ 
+@@ -173,6 +212,7 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
  
      return 0;
  }
@@ -1052,7 +1062,7 @@ index 431e0441..4b1d11d0 100644
 +
  #endif
 diff --git a/kernel/setuid_hook.c b/kernel/setuid_hook.c
-index 016ac058..422a4211 100644
+index 016ac058..b8407752 100644
 --- a/kernel/setuid_hook.c
 +++ b/kernel/setuid_hook.c
 @@ -27,6 +27,9 @@
@@ -1119,7 +1129,7 @@ index 016ac058..422a4211 100644
  int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
  {
      // we rely on the fact that zygote always call setresuid(3) with same uids
-@@ -135,6 +175,112 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
+@@ -135,6 +175,115 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
  
      return 0;
  }
@@ -1208,6 +1218,9 @@ index 016ac058..422a4211 100644
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 +    pr_info("susfs: running susfs_try_umount_all() for uid: %u\n", new_uid);
 +    susfs_try_umount_all();
++#else
++    // Handle kernel umount
++    ksu_handle_umount(old_uid, new_uid);
 +#endif // #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 +
 +skip_try_umount:
