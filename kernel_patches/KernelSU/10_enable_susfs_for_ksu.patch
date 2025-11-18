@@ -520,7 +520,7 @@ index 2369abbc..4636ad2f 100644
 +#endif // #ifndef CONFIG_KSU_SUSFS
  }
 diff --git a/kernel/kernel_umount.c b/kernel/kernel_umount.c
-index fb5a95bf..d33b2aff 100644
+index fb5a95bf..174fa0ab 100644
 --- a/kernel/kernel_umount.c
 +++ b/kernel/kernel_umount.c
 @@ -17,7 +17,11 @@
@@ -573,11 +573,11 @@ index fb5a95bf..d33b2aff 100644
      }
  }
  
-+#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
-+void try_umount(const char *mnt, bool check_mnt, int flags)
-+#else
++#ifndef CONFIG_KSU_SUSFS_TRY_UMOUNT
  static void try_umount(const char *mnt, bool check_mnt, int flags)
-+#endif // #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++#else
++void try_umount(const char *mnt, bool check_mnt, int flags)
++#endif // #ifndef CONFIG_KSU_SUSFS_TRY_UMOUNT
  {
      struct path path;
      int err = kern_path(mnt, 0, &path);
@@ -625,7 +625,7 @@ index fb5a95bf..d33b2aff 100644
  
      return 0;
  }
-+#endif // #ifndef CONFIG_KSU_SUSFS
++#endif // #if !defined(CONFIG_KSU_SUSFS) || !defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
  
  void ksu_kernel_umount_init(void)
  {
