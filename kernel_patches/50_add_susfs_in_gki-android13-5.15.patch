@@ -543,7 +543,7 @@ index ce97b60fe557..418f4a9080a7 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 18d2d37f1e2f..515b16391dcd 100644
+index 18d2d37f1e2f..5ca4bdbabb2c 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,39 @@
@@ -902,7 +902,7 @@ index 18d2d37f1e2f..515b16391dcd 100644
  	return ret;
  }
  
-@@ -4654,3 +4919,58 @@ const struct proc_ns_operations mntns_operations = {
+@@ -4654,3 +4919,46 @@ const struct proc_ns_operations mntns_operations = {
  	.install	= mntns_install,
  	.owner		= mntns_owner,
  };
@@ -948,19 +948,7 @@ index 18d2d37f1e2f..515b16391dcd 100644
 +	unlock_mount_hash();
 +}
 +#endif
-+#ifdef CONFIG_KSU_SUSFS
-+bool susfs_is_mnt_devname_ksu(struct path *path) {
-+	struct mount *mnt;
 +
-+	if (path && path->mnt) {
-+		mnt = real_mount(path->mnt);
-+		if (mnt && mnt->mnt_devname && !strcmp(mnt->mnt_devname, "KSU")) {
-+			return true;
-+		}
-+	}
-+	return false;
-+}
-+#endif
 diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
 index 3451708fd035..0e4bffd80a43 100644
 --- a/fs/notify/fdinfo.c
