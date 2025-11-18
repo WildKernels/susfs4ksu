@@ -544,7 +544,7 @@ index 1fa36df7b..e997ba39c 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 59a9f8777..e0071da88 100644
+index 59a9f8777..8ed52670a 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,39 @@
@@ -785,7 +785,7 @@ index 59a9f8777..e0071da88 100644
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +	// We keep checking for ksu process only until boot-completed stage is triggered
-+	if (!susfs_is_boot_completed_triggered && susfs_is_current_ksu_domain()) {
++	if (susfs_is_current_ksu_domain()) {
 +		mnt = susfs_alloc_sus_vfsmnt(fc->source ?: "none");
 +		atomic64_add(1, &susfs_ksu_mounts);
 +		goto bypass_orig_flow;
