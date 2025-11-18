@@ -674,10 +674,10 @@ index ce03b3d91a62..78d0efee5d56 100644
  	if (IS_ERR(new_dentry))
  		goto exit4;
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 6281247dc33b..9b74bd349363 100644
+index 6281247dc33b..c352bb641437 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -33,11 +33,41 @@
+@@ -33,11 +33,42 @@
  #include <linux/shmem_fs.h>
  #include <linux/mnt_idmapping.h>
  #include <linux/nospec.h>
@@ -697,6 +697,7 @@ index 6281247dc33b..9b74bd349363 100644
 +
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +static DEFINE_IDA(susfs_ksu_mnt_group_ida);
++static atomic64_t susfs_ksu_mounts = ATOMIC64_INIT(0);
 +#define FAKE_MNT_UNIQUE_ID_OFFSET (1ULL << 31)
 +static atomic64_t fake_mnt_id_ctr = ATOMIC64_INIT(FAKE_MNT_UNIQUE_ID_OFFSET);
 +
@@ -719,7 +720,7 @@ index 6281247dc33b..9b74bd349363 100644
  /* Maximum number of mounts in a mount namespace */
  static unsigned int sysctl_mount_max __read_mostly = 100000;
  
-@@ -248,6 +278,20 @@ static int mnt_alloc_id(struct mount *mnt)
+@@ -248,6 +279,20 @@ static int mnt_alloc_id(struct mount *mnt)
  
  static void mnt_free_id(struct mount *mnt)
  {
@@ -740,7 +741,7 @@ index 6281247dc33b..9b74bd349363 100644
  	ida_free(&mnt_id_ida, mnt->mnt_id);
  }
  
-@@ -256,7 +300,23 @@ static void mnt_free_id(struct mount *mnt)
+@@ -256,7 +301,23 @@ static void mnt_free_id(struct mount *mnt)
   */
  static int mnt_alloc_group_id(struct mount *mnt)
  {
@@ -764,7 +765,7 @@ index 6281247dc33b..9b74bd349363 100644
  
  	if (res < 0)
  		return res;
-@@ -269,6 +329,22 @@ static int mnt_alloc_group_id(struct mount *mnt)
+@@ -269,6 +330,22 @@ static int mnt_alloc_group_id(struct mount *mnt)
   */
  void mnt_release_group_id(struct mount *mnt)
  {
@@ -787,7 +788,7 @@ index 6281247dc33b..9b74bd349363 100644
  	ida_free(&mnt_group_ida, mnt->mnt_group_id);
  	mnt->mnt_group_id = 0;
  }
-@@ -306,6 +382,116 @@ int mnt_get_count(struct mount *mnt)
+@@ -306,6 +383,116 @@ int mnt_get_count(struct mount *mnt)
  #endif
  }
  
@@ -904,7 +905,7 @@ index 6281247dc33b..9b74bd349363 100644
  static struct mount *alloc_vfsmnt(const char *name)
  {
  	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
-@@ -333,6 +519,10 @@ static struct mount *alloc_vfsmnt(const char *name)
+@@ -333,6 +520,10 @@ static struct mount *alloc_vfsmnt(const char *name)
  		mnt->mnt_count = 1;
  		mnt->mnt_writers = 0;
  #endif
@@ -915,7 +916,7 @@ index 6281247dc33b..9b74bd349363 100644
  
  		INIT_HLIST_NODE(&mnt->mnt_hash);
  		INIT_LIST_HEAD(&mnt->mnt_child);
-@@ -1203,7 +1393,18 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
+@@ -1203,7 +1394,19 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
  	if (!fc->root)
  		return ERR_PTR(-EINVAL);
  
@@ -923,6 +924,7 @@ index 6281247dc33b..9b74bd349363 100644
 +	// We keep checking for ksu process only until boot-completed stage is triggered
 +	if (!susfs_is_boot_completed_triggered && susfs_is_current_ksu_domain()) {
 +		mnt = susfs_alloc_sus_vfsmnt(fc->source ?: "none");
++		atomic64_add(1, &susfs_ksu_mounts);
 +		goto bypass_orig_flow;
 +	}
 +#endif
@@ -934,7 +936,7 @@ index 6281247dc33b..9b74bd349363 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -1286,7 +1487,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
+@@ -1286,7 +1489,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
  	struct mount *mnt;
  	int err;
  
@@ -972,7 +974,7 @@ index 6281247dc33b..9b74bd349363 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -2801,6 +3032,23 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2801,6 +3034,23 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -996,7 +998,7 @@ index 6281247dc33b..9b74bd349363 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3960,6 +4208,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3960,6 +4210,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
@@ -1006,7 +1008,7 @@ index 6281247dc33b..9b74bd349363 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -4075,6 +4326,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+@@ -4075,6 +4328,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
  
  	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
  
@@ -1022,7 +1024,7 @@ index 6281247dc33b..9b74bd349363 100644
  	kfree(options);
  out_data:
  	kfree(kernel_dev);
-@@ -4301,6 +4561,15 @@ SYSCALL_DEFINE5(move_mount,
+@@ -4301,6 +4563,15 @@ SYSCALL_DEFINE5(move_mount,
  	path_put(&to_path);
  out_from:
  	path_put(&from_path);
@@ -1038,7 +1040,7 @@ index 6281247dc33b..9b74bd349363 100644
  	return ret;
  }
  
-@@ -5852,3 +6121,64 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -5852,3 +6123,70 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
@@ -1052,6 +1054,11 @@ index 6281247dc33b..9b74bd349363 100644
 +	int first_mnt_id = 0;
 +
 +	if (!mnt_ns) {
++		return;
++	}
++
++	// Do not reorder the mnt_id if there is no any ksu mount at all
++	if (atomic64_read(&susfs_ksu_mounts) == 0) {
 +		return;
 +	}
 +
@@ -1085,6 +1092,7 @@ index 6281247dc33b..9b74bd349363 100644
 +	mnt->mnt_id = DEFAULT_KSU_MNT_ID;
 +	mnt->mnt_group_id = ida_alloc_min(&susfs_ksu_mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
 +	mnt->mnt_id_unique = atomic64_inc_return(&fake_mnt_id_ctr);
++	atomic64_add(1, &susfs_ksu_mounts);
 +
 +	unlock_mount_hash();
 +}
