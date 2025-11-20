@@ -1950,7 +1950,7 @@ index 357a1db410ec..9b60ffbe906c 100644
  		      AT_STATX_SYNC_TYPE))
  		return -EINVAL;
 diff --git a/fs/statfs.c b/fs/statfs.c
-index 2a37f9f3dba1..e56f577710cc 100644
+index 2a37f9f3dba1..056b171a848e 100644
 --- a/fs/statfs.c
 +++ b/fs/statfs.c
 @@ -9,6 +9,10 @@
@@ -1988,18 +1988,6 @@ index 2a37f9f3dba1..e56f577710cc 100644
  }
  EXPORT_SYMBOL_NS(vfs_statfs, ANDROID_GKI_VFS_EXPORT_ONLY);
  
-@@ -240,6 +256,11 @@ static int vfs_ustat(dev_t dev, struct kstatfs *sbuf)
- 	if (!s)
- 		return -EINVAL;
- 
-+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-+	if (unlikely(s->s_root->d_inode->i_mapping->flags & BIT_SUS_MOUNT)) {
-+		return -EINVAL;
-+	}
-+#endif
- 	err = statfs_by_dentry(s->s_root, sbuf);
- 	drop_super(s);
- 	return err;
 diff --git a/include/linux/mount.h b/include/linux/mount.h
 index 9fc79930799e..0da7c62eb846 100644
 --- a/include/linux/mount.h
