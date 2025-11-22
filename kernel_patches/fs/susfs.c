@@ -604,7 +604,7 @@ void susfs_sus_ino_for_show_map_vma(unsigned long ino, dev_t *out_dev, unsigned 
 /* try_umount */
 #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 static DEFINE_SPINLOCK(susfs_spin_lock_try_umount);
-extern void try_umount(const char *mnt, bool check_mnt, int flags);
+extern void try_umount(const char *mnt, int flags);
 static LIST_HEAD(LH_TRY_UMOUNT_PATH);
 void susfs_add_try_umount(void __user **user_info) {
 	struct st_susfs_try_umount info = {0};
@@ -646,75 +646,15 @@ out_copy_to_user:
 	SUSFS_LOGI("CMD_SUSFS_ADD_TRY_UMOUNT -> ret: %d\n", info.err);
 }
 
-void susfs_try_umount(void) {
+void susfs_try_umount(uid_t uid) {
 	struct st_susfs_try_umount_list *cursor = NULL;
 
 	// We should umount in reversed order
 	list_for_each_entry_reverse(cursor, &LH_TRY_UMOUNT_PATH, list) {
-		try_umount(cursor->info.target_pathname, false, cursor->info.mnt_mode);
+		SUSFS_LOGI("umounting '%s' for uid: %u\n", cursor->info.target_pathname, uid);
+		try_umount(cursor->info.target_pathname, cursor->info.mnt_mode);
 	}
 }
-
-#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
-	struct st_susfs_try_umount_list *new_list = NULL;
-	char *pathname = NULL, *dpath = NULL;
-	size_t new_pathname_len = 0;
-
-#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-	if (path->dentry->d_inode->i_mapping->flags & BIT_SUS_KSTAT) {
-		SUSFS_LOGI("skip adding path to try_umount list as its inode is flagged BIT_SUS_KSTAT already\n");
-		return;
-	}
-#endif
-
-	pathname = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!pathname) {
-		SUSFS_LOGE("no enough memory\n");
-		return;
-	}
-
-	dpath = d_path(path, pathname, PAGE_SIZE);
-	if (!dpath) {
-		SUSFS_LOGE("dpath is NULL\n");
-		goto out_free_pathname;
-	}
-
-	// - Important to check if it is from a magic mount, if so, then we need only
-	//   the path which is directory only, others should be skipped.
-	// - We need to strip out "/debug_ramdisk/workdir" here since there will be
-	//   no "/debug_ramdisk/workdir" prefixed in zygote mnt ns
-	if (!strncmp(dpath, "/debug_ramdisk/workdir/", 23)) {
-		if (path->dentry->d_inode && S_ISDIR(path->dentry->d_inode->i_mode)) {
-			new_pathname_len = strlen(dpath) - 22;
-			memmove(dpath, dpath+22, new_pathname_len);
-			*(dpath + new_pathname_len) = '\0';
-			goto add_to_new_list;
-		}
-		goto out_free_pathname;
-	}
-
-add_to_new_list:
-	new_list = kmalloc(sizeof(struct st_susfs_try_umount_list), GFP_KERNEL);
-	if (!new_list) {
-		SUSFS_LOGE("no enough memory\n");
-		goto out_free_pathname;
-	}
-
-	strncpy(new_list->info.target_pathname, dpath, SUSFS_MAX_LEN_PATHNAME-1);
-
-	new_list->info.mnt_mode = MNT_DETACH;
-
-	INIT_LIST_HEAD(&new_list->list);
-	spin_lock(&susfs_spin_lock_try_umount);
-	list_add_tail(&new_list->list, &LH_TRY_UMOUNT_PATH);
-	spin_unlock(&susfs_spin_lock_try_umount);
-	SUSFS_LOGI("target_pathname: '%s', ino: %lu, umount options: %d, is successfully added to LH_TRY_UMOUNT_PATH\n",
-					new_list->info.target_pathname, path->dentry->d_inode->i_ino, new_list->info.mnt_mode);
-out_free_pathname:
-	kfree(pathname);
-}
-#endif // #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
 #endif // #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 
 /* spoof_uname */
@@ -1041,11 +981,6 @@ void susfs_get_enabled_features(void __user **user_info) {
 #endif
 #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 	info->err = copy_config_to_buf("CONFIG_KSU_SUSFS_TRY_UMOUNT\n", buf_ptr, &copied_size, SUSFS_ENABLED_FEATURES_SIZE);
-	if (info->err) goto out_copy_to_user;
-	buf_ptr = info->enabled_features + copied_size;
-#endif
-#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-	info->err = copy_config_to_buf("CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT\n", buf_ptr, &copied_size, SUSFS_ENABLED_FEATURES_SIZE);
 	if (info->err) goto out_copy_to_user;
 	buf_ptr = info->enabled_features + copied_size;
 #endif
