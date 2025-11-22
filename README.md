@@ -1,9 +1,9 @@
 ## Introduction ##
-This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan zuma kernel branch 16.0.0-sultan and 5ec1cff's KernelSU fork
+This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan zuma kernel branch 16.0.0-sultan and official KernelSU fork
 
 - Sultan kernel for zuma: https://github.com/kerneltoast/android_kernel_google_zuma
 
-- 5ec1cff's KernelSU aka MKSU: https://github.com/5ec1cff/KernelSU
+- Official KernelSU: https://github.com/tiann/KernelSU
 
 - Based on Factory Images with Security Patch 2025-09-05
 
@@ -15,10 +15,8 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
 ## Features ##
 - Minimal SUSFS features which by default enables only the following:
     * CONFIG_KSU_SUSFS_SUS_MOUNT
-    * CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
-    * CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
     * CONFIG_KSU_SUSFS_TRY_UMOUNT
-    * CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
+    * CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT
     * CONFIG_KSU_SUSFS_ENABLE_LOG
     * CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
     * CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
@@ -29,8 +27,6 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
 - Bypass the kprobe and tracepoint hooks used by the official KSU and MKSU, all susfs hooks are fully inlined now, including sucompat hooks.
 
 - Reverted the original uname spoof, a stock uname is already spoofed during compile time
-
-- MKSU based, so no overlayfs is required
 
 ## Apply SUSFS patches ##
 1. Clone this susfs branch with a **tag / release tag** or up to a commit message containing **"Bump version to vX.X.X"**, as they are more stable in general.
