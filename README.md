@@ -15,8 +15,6 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
 ## Features ##
 - Minimal SUSFS features which by default enables only the following:
     * CONFIG_KSU_SUSFS_SUS_MOUNT
-    * CONFIG_KSU_SUSFS_TRY_UMOUNT
-    * CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT
     * CONFIG_KSU_SUSFS_ENABLE_LOG
     * CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
     * CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
