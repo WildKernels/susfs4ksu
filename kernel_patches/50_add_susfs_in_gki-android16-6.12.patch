@@ -1244,7 +1244,7 @@ index 87dcaae32ff8..32b61bc9ca71 100644
  		seq_puts(m, saved_boot_config);
  	return 0;
 diff --git a/fs/proc/fd.c b/fs/proc/fd.c
-index 5e391cbca7a3..86c12a5651ab 100644
+index 5e391cbca7a3..225354ecc3da 100644
 --- a/fs/proc/fd.c
 +++ b/fs/proc/fd.c
 @@ -15,6 +15,9 @@
@@ -1267,7 +1267,7 @@ index 5e391cbca7a3..86c12a5651ab 100644
  
  	task = get_proc_task(m->private);
  	if (!task)
-@@ -54,10 +60,49 @@ static int seq_show(struct seq_file *m, void *v)
+@@ -54,10 +60,47 @@ static int seq_show(struct seq_file *m, void *v)
  	if (ret)
  		return ret;
  
@@ -1279,8 +1279,6 @@ index 5e391cbca7a3..86c12a5651ab 100644
 +		struct path path;
 +		char *pathname = kmalloc(PAGE_SIZE, GFP_KERNEL);
 +		char *dpath;
-+
-+		for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
 +
 +		if (!pathname) {
 +			goto out_seq_printf;
@@ -1294,7 +1292,7 @@ index 5e391cbca7a3..86c12a5651ab 100644
 +		}
 +		seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\nino:\t%lu\n",
 +				(long long)file->f_pos, f_flags,
-+				mnt->mnt_id,
++				real_mount(path.mnt)->mnt_id,
 +				path.dentry->d_inode->i_ino);
 +		path_put(&path);
 +		kfree(pathname);
