@@ -1,3 +1,15 @@
+diff --git a/kernel/Kbuild b/kernel/Kbuild
+index d98df1c3..a8bfc148 100644
+--- a/kernel/Kbuild
++++ b/kernel/Kbuild
+@@ -3,7 +3,6 @@ kernelsu-objs += allowlist.o
+ kernelsu-objs += app_profile.o
+ kernelsu-objs += apk_sign.o
+ kernelsu-objs += sucompat.o
+-kernelsu-objs += syscall_hook_manager.o
+ kernelsu-objs += throne_tracker.o
+ kernelsu-objs += pkg_observer.o
+ kernelsu-objs += setuid_hook.o
 diff --git a/kernel/Kconfig b/kernel/Kconfig
 index cc4dbb3a..393e16cd 100644
 --- a/kernel/Kconfig
@@ -106,18 +118,10 @@ index cc4dbb3a..393e16cd 100644
 +
  endmenu
 diff --git a/kernel/Makefile b/kernel/Makefile
-index a40e20dc..00a7da56 100644
+index 0b8c8a10..ba9272ed 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
-@@ -3,7 +3,6 @@ kernelsu-objs += allowlist.o
- kernelsu-objs += app_profile.o
- kernelsu-objs += apk_sign.o
- kernelsu-objs += sucompat.o
--kernelsu-objs += syscall_hook_manager.o
- kernelsu-objs += throne_tracker.o
- kernelsu-objs += pkg_observer.o
- kernelsu-objs += setuid_hook.o
-@@ -86,4 +85,13 @@ compdb:
+@@ -13,4 +13,13 @@ compdb:
  clean:
  	make -C $(KDIR) M=$(MDIR) clean
  
@@ -858,7 +862,7 @@ index 431e0441..4b1d11d0 100644
 +
  #endif
 diff --git a/kernel/setuid_hook.c b/kernel/setuid_hook.c
-index 016ac058..d9ecd63f 100644
+index 016ac058..15e6f912 100644
 --- a/kernel/setuid_hook.c
 +++ b/kernel/setuid_hook.c
 @@ -27,6 +27,9 @@
@@ -913,7 +917,7 @@ index 016ac058..d9ecd63f 100644
  int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
  {
      // we rely on the fact that zygote always call setresuid(3) with same uids
-@@ -135,6 +163,97 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
+@@ -135,6 +163,94 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
  
      return 0;
  }
@@ -991,20 +995,17 @@ index 016ac058..d9ecd63f 100644
 +    // Handle kernel umount
 +    ksu_handle_umount(old_uid, new_uid);
 +
-+    get_task_struct(current);
-+
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +    // We can reorder the mnt_id now after all sus mounts are umounted
 +    susfs_reorder_mnt_id();
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +
-+    susfs_set_current_proc_umounted();
-+
-+    put_task_struct(current);
-+
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
 +    susfs_run_sus_path_loop(new_uid);
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
++
++    susfs_set_current_proc_umounted();
++
 +    return 0;
 +}
 +#endif // #ifndef CONFIG_KSU_SUSFS
