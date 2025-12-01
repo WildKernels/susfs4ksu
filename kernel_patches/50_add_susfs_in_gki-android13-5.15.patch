@@ -1098,7 +1098,7 @@ index 2e244ada1f97..792e1cb04b11 100644
  		seq_puts(m, saved_boot_config);
  	return 0;
 diff --git a/fs/proc/fd.c b/fs/proc/fd.c
-index 913bef0d2a36..b7c1849b22d5 100644
+index 913bef0d2a36..0f416b960f7f 100644
 --- a/fs/proc/fd.c
 +++ b/fs/proc/fd.c
 @@ -13,6 +13,9 @@
@@ -1121,7 +1121,7 @@ index 913bef0d2a36..b7c1849b22d5 100644
  
  	task = get_proc_task(m->private);
  	if (!task)
-@@ -54,10 +60,47 @@ static int seq_show(struct seq_file *m, void *v)
+@@ -54,10 +60,53 @@ static int seq_show(struct seq_file *m, void *v)
  	if (ret)
  		return ret;
  
@@ -1144,9 +1144,15 @@ index 913bef0d2a36..b7c1849b22d5 100644
 +		if (kern_path(dpath, 0, &path)) {
 +			goto out_free_pathname;
 +		}
++
++		// - We have to iterate the mnt->mnt_parent until the mnt_id is not sus,
++		//   doing real_mount(path.mnt)->mnt_id is wrong since this will retrieve
++		//   the mnt_id of the umounted path.
++		for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
++
 +		seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\nino:\t%lu\n",
 +				(long long)file->f_pos, f_flags,
-+				real_mount(path.mnt)->mnt_id,
++				mnt->mnt_id,
 +				path.dentry->d_inode->i_ino);
 +		path_put(&path);
 +		kfree(pathname);
