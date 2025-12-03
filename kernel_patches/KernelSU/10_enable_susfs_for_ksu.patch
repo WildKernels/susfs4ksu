@@ -719,10 +719,10 @@ index 6e7002b0..f408edc8 100644
  static inline void ksu_invalidate_manager_uid()
  {
 diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
-index b5a52f85..a12424a8 100644
+index aef54a42..768da798 100644
 --- a/kernel/selinux/rules.c
 +++ b/kernel/selinux/rules.c
-@@ -127,6 +127,15 @@ void apply_kernelsu_rules()
+@@ -102,6 +102,15 @@ void apply_kernelsu_rules()
      ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
      ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
  
