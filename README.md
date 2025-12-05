@@ -5,7 +5,7 @@ This branch is exclusive for pixel8 (Shiba) only, it is based on latest sultan z
 
 - Official KernelSU: https://github.com/tiann/KernelSU
 
-- Based on Factory Images with Security Patch 2025-09-05
+- Based on Factory Images with Security Patch 2025-12-05
 
 ## Requirements ##
 - Full Stock Factory Pixel 8 (Shiba) images
