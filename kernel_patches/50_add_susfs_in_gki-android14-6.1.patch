@@ -2219,21 +2219,8 @@ index f8fd4399f..c5c57fc4d 100644
  CONFIG_IRQ_SBALANCE=y
  CONFIG_SBALANCE_EXCLUDE_CPUS="3,7,8"
  CONFIG_NO_HZ=y
-diff --git a/Makefile b/Makefile
-index 83481d773..499a4af78 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,7 +1,7 @@
- # SPDX-License-Identifier: GPL-2.0
- VERSION = 6
- PATCHLEVEL = 1
--SUBLEVEL = 134
-+SUBLEVEL = 145
- EXTRAVERSION =
- NAME = Curry Ramen
- 
 diff --git a/init/Makefile b/init/Makefile
-index 8316c23be..022196b12 100644
+index 8316c23be..8c6b8930e 100644
 --- a/init/Makefile
 +++ b/init/Makefile
 @@ -29,7 +29,8 @@ preempt-flag-$(CONFIG_PREEMPT_DYNAMIC)	:= PREEMPT_DYNAMIC
@@ -2242,12 +2229,12 @@ index 8316c23be..022196b12 100644
  build-version = $(or $(KBUILD_BUILD_VERSION), $(build-version-auto))
 -build-timestamp = $(or $(KBUILD_BUILD_TIMESTAMP), $(build-timestamp-auto))
 +#build-timestamp = $(or $(KBUILD_BUILD_TIMESTAMP), $(build-timestamp-auto))
-+build-timestamp = "Mon Oct  6 16:50:48 UTC 2025"
++build-timestamp = "Tue Jul  8 09:17:32 UTC 2025"
  
  # Maximum length of UTS_VERSION is 64 chars
  filechk_uts_version = \
 diff --git a/scripts/setlocalversion b/scripts/setlocalversion
-index 1b733ae4c..1db2d4e47 100755
+index 1b733ae4c..2863462a8 100755
 --- a/scripts/setlocalversion
 +++ b/scripts/setlocalversion
 @@ -170,4 +170,5 @@ if test -n "${BUILD_NUMBER}"; then
@@ -2256,4 +2243,4 @@ index 1b733ae4c..1db2d4e47 100755
  
 -echo "$res"
 +#echo "$res"
-+echo "-android14-11-gc1de4747ac59-ab14219743"
++echo "-android14-11-g66e758f7d0c0-ab13748739"
