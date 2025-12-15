@@ -1,5 +1,5 @@
 diff --git a/kernel/Kbuild b/kernel/Kbuild
-index 4ff62ab6..8efaadab 100644
+index 5fa11ae9..79517337 100644
 --- a/kernel/Kbuild
 +++ b/kernel/Kbuild
 @@ -3,7 +3,6 @@ kernelsu-objs += allowlist.o
@@ -175,7 +175,7 @@ index ac863607..afc60b14 100644
 +endif
  # Keep a new line here!! Because someone may append config
 diff --git a/kernel/allowlist.c b/kernel/allowlist.c
-index c9a68e27..86624c55 100644
+index 5822b1be..b4907053 100644
 --- a/kernel/allowlist.c
 +++ b/kernel/allowlist.c
 @@ -17,7 +17,9 @@
@@ -185,10 +185,10 @@ index c9a68e27..86624c55 100644
 +#ifndef CONFIG_KSU_SUSFS
  #include "syscall_hook_manager.h"
 +#endif // #ifndef CONFIG_KSU_SUSFS
+ #include "su_mount_ns.h"
  
  #define FILE_MAGIC 0x7f4b5355 // ' KSU', u32
- #define FILE_FORMAT_VERSION 3 // u32
-@@ -258,8 +260,10 @@ out:
+@@ -259,8 +261,10 @@ out:
  
      if (persist) {
          persistent_allow_list();
@@ -216,20 +216,20 @@ index b5b7d3a8..fa2e38a9 100644
  }
 \ No newline at end of file
 diff --git a/kernel/app_profile.c b/kernel/app_profile.c
-index 412b5524..56e9ab66 100644
+index 47c0294c..903a2f5c 100644
 --- a/kernel/app_profile.c
 +++ b/kernel/app_profile.c
-@@ -11,7 +11,9 @@
- #include "app_profile.h"
+@@ -12,7 +12,9 @@
  #include "klog.h" // IWYU pragma: keep
  #include "selinux/selinux.h"
+ #include "su_mount_ns.h"
 +#ifndef CONFIG_KSU_SUSFS
  #include "syscall_hook_manager.h"
 +#endif // #ifndef CONFIG_KSU_SUSFS
  
  static struct group_info root_groups = { .usage = ATOMIC_INIT(2) };
  
-@@ -76,8 +78,10 @@ static void disable_seccomp(void)
+@@ -77,8 +79,10 @@ static void disable_seccomp(void)
  void escape_with_root_profile(void)
  {
      struct cred *cred;
@@ -241,17 +241,17 @@ index 412b5524..56e9ab66 100644
      cred = prepare_creds();
      if (!cred) {
 @@ -129,9 +133,11 @@ void escape_with_root_profile(void)
+     spin_unlock_irq(&current->sighand->siglock);
  
      setup_selinux(profile->selinux_domain);
- 
 +#ifndef CONFIG_KSU_SUSFS
      for_each_thread (p, t) {
          ksu_set_task_tracepoint_flag(t);
      }
 +#endif // #ifndef CONFIG_KSU_SUSFS
- }
  
- void escape_to_root_for_init(void)
+     setup_mount_ns(profile->namespaces);
+ }
 diff --git a/kernel/kernel_umount.c b/kernel/kernel_umount.c
 index e1d67bd9..ba06b66d 100644
 --- a/kernel/kernel_umount.c
