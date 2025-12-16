@@ -216,7 +216,7 @@ index b5b7d3a8..fa2e38a9 100644
  }
 \ No newline at end of file
 diff --git a/kernel/app_profile.c b/kernel/app_profile.c
-index 47c0294c..903a2f5c 100644
+index 7110bf42..63e14bd7 100644
 --- a/kernel/app_profile.c
 +++ b/kernel/app_profile.c
 @@ -12,7 +12,9 @@
@@ -227,9 +227,9 @@ index 47c0294c..903a2f5c 100644
  #include "syscall_hook_manager.h"
 +#endif // #ifndef CONFIG_KSU_SUSFS
  
- static struct group_info root_groups = { .usage = ATOMIC_INIT(2) };
- 
-@@ -77,8 +79,10 @@ static void disable_seccomp(void)
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION (6, 7, 0)
+ 	static struct group_info root_groups = { .usage = REFCOUNT_INIT(2) };
+@@ -81,8 +83,10 @@ static void disable_seccomp(void)
  void escape_with_root_profile(void)
  {
      struct cred *cred;
@@ -240,7 +240,7 @@ index 47c0294c..903a2f5c 100644
  
      cred = prepare_creds();
      if (!cred) {
-@@ -129,9 +133,11 @@ void escape_with_root_profile(void)
+@@ -133,9 +137,11 @@ void escape_with_root_profile(void)
      spin_unlock_irq(&current->sighand->siglock);
  
      setup_selinux(profile->selinux_domain);
