@@ -81,7 +81,7 @@ index 4f25015aa534..17e9e15af730 100644
  		return NULL;
  	return dentry->d_fsdata;
 diff --git a/fs/exec.c b/fs/exec.c
-index b1b9db56a609..815ed25ed204 100644
+index b1b9db56a609..b4a76aa43bb1 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
 @@ -65,6 +65,9 @@
@@ -94,12 +94,13 @@ index b1b9db56a609..815ed25ed204 100644
  
  #include <linux/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -1891,6 +1894,16 @@ static int bprm_execve(struct linux_binprm *bprm,
+@@ -1891,6 +1894,17 @@ static int bprm_execve(struct linux_binprm *bprm,
  	return retval;
  }
  
 +#ifdef CONFIG_KSU_SUSFS
 +extern bool ksu_execveat_hook __read_mostly;
++extern bool ksu_su_compat_enabled __read_mostly;
 +extern bool susfs_is_boot_completed_triggered __read_mostly;
 +extern bool __ksu_is_allow_uid_for_current(uid_t uid);
 +extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
@@ -111,12 +112,12 @@ index b1b9db56a609..815ed25ed204 100644
  static int do_execveat_common(int fd, struct filename *filename,
  			      struct user_arg_ptr argv,
  			      struct user_arg_ptr envp,
-@@ -1902,6 +1915,20 @@ static int do_execveat_common(int fd, struct filename *filename,
+@@ -1902,6 +1916,20 @@ static int do_execveat_common(int fd, struct filename *filename,
  	if (IS_ERR(filename))
  		return PTR_ERR(filename);
  
 +#ifdef CONFIG_KSU_SUSFS
-+	if (likely(susfs_is_current_proc_umounted())) {
++	if (likely(susfs_is_current_proc_umounted()) || !ksu_su_compat_enabled) {
 +		goto orig_flow;
 +	}
 +
@@ -968,7 +969,7 @@ index 3451708fd035..0e4bffd80a43 100644
  			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
  			   inotify_mark_user_mask(mark));
 diff --git a/fs/open.c b/fs/open.c
-index 39779f1ba4e1..da9e891d4648 100644
+index 39779f1ba4e1..45e40bfebd6e 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -33,6 +33,9 @@
@@ -981,11 +982,12 @@ index 39779f1ba4e1..da9e891d4648 100644
  
  #include "internal.h"
  #include <trace/hooks/syscall_check.h>
-@@ -394,6 +397,12 @@ static const struct cred *access_override_creds(void)
+@@ -394,6 +397,13 @@ static const struct cred *access_override_creds(void)
  	return old_cred;
  }
  
 +#ifdef CONFIG_KSU_SUSFS
++extern bool ksu_su_compat_enabled __read_mostly;
 +extern bool __ksu_is_allow_uid_for_current(uid_t uid);
 +extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
 +			int *flags);
@@ -994,12 +996,12 @@ index 39779f1ba4e1..da9e891d4648 100644
  static long do_faccessat(int dfd, const char __user *filename, int mode, int flags)
  {
  	struct path path;
-@@ -402,6 +411,18 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
+@@ -402,6 +412,18 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
  	unsigned int lookup_flags = LOOKUP_FOLLOW;
  	const struct cred *old_cred = NULL;
  
 +#ifdef CONFIG_KSU_SUSFS
-+	if (likely(susfs_is_current_proc_umounted())) {
++	if (likely(susfs_is_current_proc_umounted()) || !ksu_su_compat_enabled) {
 +		goto orig_flow;
 +	}
 +
@@ -1850,7 +1852,7 @@ index 09e8ed7d4161..fe6c96984ae4 100644
  	if (error >= 0)
  		error = buf.error;
 diff --git a/fs/stat.c b/fs/stat.c
-index 357a1db410ec..9b60ffbe906c 100644
+index 357a1db410ec..64835214d4f6 100644
 --- a/fs/stat.c
 +++ b/fs/stat.c
 @@ -17,6 +17,10 @@
@@ -1893,11 +1895,12 @@ index 357a1db410ec..9b60ffbe906c 100644
  	stat->dev = inode->i_sb->s_dev;
  	stat->ino = inode->i_ino;
  	stat->mode = inode->i_mode;
-@@ -184,6 +203,15 @@ int vfs_fstat(int fd, struct kstat *stat)
+@@ -184,6 +203,16 @@ int vfs_fstat(int fd, struct kstat *stat)
  	return error;
  }
  
 +#ifdef CONFIG_KSU_SUSFS
++extern bool ksu_su_compat_enabled __read_mostly;
 +extern bool __ksu_is_allow_uid_for_current(uid_t uid);
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
 +extern int ksu_handle_stat(int *dfd, struct filename **filename, int *flags);
@@ -1909,12 +1912,12 @@ index 357a1db410ec..9b60ffbe906c 100644
  /**
   * vfs_statx - Get basic and extra attributes by filename
   * @dfd: A file descriptor representing the base dir for a relative filename
-@@ -206,6 +234,18 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
+@@ -206,6 +235,18 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
  	unsigned lookup_flags = 0;
  	int error;
  
 +#ifdef CONFIG_KSU_SUSFS
-+	if (likely(susfs_is_current_proc_umounted())) {
++	if (likely(susfs_is_current_proc_umounted()) || !ksu_su_compat_enabled) {
 +		goto orig_flow;
 +	}
 +
