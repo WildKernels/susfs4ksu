@@ -1,4 +1,4 @@
-name: Sync branches and update README
+name: Sync susfs4ksu branches and update README
 
 on:
   workflow_dispatch:
@@ -18,17 +18,17 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Add GitLab upstream
+      - name: Add upstream repository
         run: |
           git remote add upstream https://gitlab.com/simonpunk/susfs4ksu.git || true
           git fetch upstream --prune
 
-      - name: Sync all branches (skip master)
+      - name: Sync all branches (skip wild)
         run: |
           set -e
 
           for branch in $(git branch -r | grep upstream/ | grep -v HEAD | sed 's|upstream/||'); do
-            [ "$branch" = "master" ] && continue
+            [ "$branch" = "wild" ] && continue
 
             echo "Syncing $branch"
 
@@ -42,19 +42,15 @@ jobs:
             git push origin $branch --force
           done
 
-      - name: Update README branch report
+      - name: Update README on wild
         run: |
           set -e
-
-          git checkout main 2>/dev/null || git checkout master || true
 
           if [ ! -f README.md ]; then
           cat > README.md << 'EOF'
           # susfs4ksu (Fork)
           
-          This is a fork of **susfs4ksu**:
-          
-          https://gitlab.com/simonpunk/susfs4ksu
+          This repository is a fork. All branches except 'wild' are listed below.
           
           ## Branches
           
@@ -65,12 +61,14 @@ jobs:
 
           REPORT=""
           for branch in $(git branch -r | grep upstream/ | grep -v HEAD | sed 's|upstream/||'); do
-            [ "$branch" = "master" ] && continue
+            [ "$branch" = "wild" ] && continue
 
             COMMIT=$(git rev-parse upstream/$branch)
             SHORT=${COMMIT:0:7}
+            MESSAGE=$(git log -1 --pretty=%s upstream/$branch)
             LINK="https://gitlab.com/simonpunk/susfs4ksu/-/commit/$COMMIT"
-            REPORT="$REPORT- \`$branch\`: [$SHORT]($LINK)\n"
+
+            REPORT="$REPORT- \`$branch\`: [$SHORT]($LINK) — $MESSAGE\n"
           done
 
           awk -v report="$REPORT" '
