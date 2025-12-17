@@ -46,23 +46,21 @@ jobs:
         run: |
           set -e
 
-          # Switch to a branch to store README (prefer main)
           git checkout main 2>/dev/null || git checkout master || true
 
-          # Create README.md if it does not exist
           if [ ! -f README.md ]; then
-            cat > README.md << 'EOF'
-            # susfs4ksu (Fork)
-            
-            This is a fork of **susfs4ksu**:
-            
-            https://gitlab.com/simonpunk/susfs4ksu
-            
-            ## Branches
-            
-            <!-- BRANCH-LIST-START -->
-            <!-- BRANCH-LIST-END -->
-            EOF
+cat > README.md << 'EOF'
+# susfs4ksu (Fork)
+
+This is a fork of **susfs4ksu**:
+
+https://gitlab.com/simonpunk/susfs4ksu
+
+## Branches
+
+<!-- BRANCH-LIST-START -->
+<!-- BRANCH-LIST-END -->
+EOF
           fi
 
           REPORT=""
