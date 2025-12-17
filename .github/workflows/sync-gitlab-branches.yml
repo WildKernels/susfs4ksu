@@ -1,0 +1,78 @@
+name: Sync branches and update README
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add GitLab upstream
+        run: |
+          git remote add upstream https://gitlab.com/simonpunk/susfs4ksu.git || true
+          git fetch upstream --prune
+
+      - name: Sync all branches (skip master)
+        run: |
+          set -e
+
+          for branch in $(git branch -r | grep upstream/ | grep -v HEAD | sed 's|upstream/||'); do
+            [ "$branch" = "master" ] && continue
+
+            echo "Syncing $branch"
+
+            if git show-ref --verify --quiet refs/heads/$branch; then
+              git checkout $branch
+            else
+              git checkout -b $branch upstream/$branch
+            fi
+
+            git reset --hard upstream/$branch
+            git push origin $branch --force
+          done
+
+      - name: Update README branch report (skip master)
+        run: |
+          set -e
+          git checkout main 2>/dev/null || git checkout master
+
+          REPORT=""
+          for branch in $(git branch -r | grep upstream/ | grep -v HEAD | sed 's|upstream/||'); do
+            [ "$branch" = "master" ] && continue
+
+            COMMIT=$(git rev-parse upstream/$branch)
+            SHORT=${COMMIT:0:7}
+            LINK="https://gitlab.com/simonpunk/susfs4ksu/-/commit/$COMMIT"
+            REPORT="$REPORT- \`$branch\`: [$SHORT]($LINK)\n"
+          done
+
+          awk -v report="$REPORT" '
+            BEGIN {keep=1}
+            /<!-- BRANCH-LIST-START -->/ {
+              print
+              printf "%s", report
+              keep=0
+              next
+            }
+            /<!-- BRANCH-LIST-END -->/ {
+              keep=1
+            }
+            keep {print}
+          ' README.md > README.tmp
+
+          mv README.tmp README.md
+
+          git add README.md
+          git commit -m "Update branch commit report" || echo "No README changes"
+          git push origin HEAD
