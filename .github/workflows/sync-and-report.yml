@@ -46,6 +46,14 @@ jobs:
         run: |
           set -e
 
+          # Checkout wild branch (create if missing)
+          if git show-ref --verify --quiet refs/heads/wild; then
+            git checkout wild
+          else
+            git checkout -b wild
+          fi
+
+          # Create README.md if missing
           if [ ! -f README.md ]; then
           cat > README.md << 'EOF'
           # susfs4ksu (Fork)
