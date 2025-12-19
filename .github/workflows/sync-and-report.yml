@@ -22,13 +22,12 @@ jobs:
           git fetch upstream --prune
 
       - name: Mirror upstream branches (exclude wild)
-        env:
-          UPSTREAM_BRANCHES: >-
-            $(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream \
-            | grep -v '^HEAD$' \
-            | grep -v '^wild$')
         run: |
           set -euo pipefail
+          
+          UPSTREAM_BRANCHES=$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream \
+            | grep -v '^HEAD$' \
+            | grep -v '^wild$')
           
           ORIGIN_BRANCHES=$(git for-each-ref \
             --format='%(refname:lstrip=3)' \
@@ -36,7 +35,8 @@ jobs:
             | grep -v '^HEAD$' \
             | grep -v '^wild$')
           
-          echo "Upstream branches to sync: $UPSTREAM_BRANCHES"
+          echo "Upstream branches to sync:"
+          echo "$UPSTREAM_BRANCHES"
           
           for branch in $UPSTREAM_BRANCHES; do
             echo "Syncing $branch"
@@ -57,13 +57,12 @@ jobs:
           done
 
       - name: Update README on wild
-        env:
-          UPSTREAM_BRANCHES: >-
-            $(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream \
-            | grep -v '^HEAD$' \
-            | grep -v '^wild$')
         run: |
           set -euo pipefail
+          
+          UPSTREAM_BRANCHES=$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream \
+            | grep -v '^HEAD$' \
+            | grep -v '^wild$')
           
           if git show-ref --verify --quiet refs/heads/wild; then
             git checkout wild
