@@ -27,34 +27,38 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Upstream branches (exclude wild)
+          # Upstream branches (exclude HEAD and wild)
           UPSTREAM_BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/upstream \
+            | grep -v '^upstream/HEAD$' \
             | sed 's|^upstream/||' \
-            | grep -v '^HEAD$' \
             | grep -v '^wild$')
 
-          # Origin branches (exclude wild)
+          # Origin branches (exclude HEAD and wild)
           ORIGIN_BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin \
+            | grep -v '^origin/HEAD$' \
             | sed 's|^origin/||' \
-            | grep -v '^HEAD$' \
             | grep -v '^wild$')
 
           # Sync or create branches
           for branch in $UPSTREAM_BRANCHES; do
+            [ -z "$branch" ] && continue
+
             echo "Syncing $branch"
 
-            if git show-ref --verify --quiet refs/heads/$branch; then
-              git checkout $branch
+            if git show-ref --verify --quiet "refs/heads/$branch"; then
+              git checkout "$branch"
             else
-              git checkout -b $branch upstream/$branch
+              git checkout -b "$branch" "upstream/$branch"
             fi
 
-            git reset --hard upstream/$branch
-            git push origin $branch --force
+            git reset --hard "upstream/$branch"
+            git push origin "$branch" --force
           done
 
           # Remove branches deleted upstream
           for branch in $ORIGIN_BRANCHES; do
+            [ -z "$branch" ] && continue
+
             if ! echo "$UPSTREAM_BRANCHES" | grep -qx "$branch"; then
               echo "Deleting stale branch $branch"
               git push origin --delete "$branch"
@@ -65,19 +69,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Checkout wild
+          # Checkout wild (never synced from upstream)
           if git show-ref --verify --quiet refs/heads/wild; then
             git checkout wild
           else
             git checkout -b wild
           fi
 
-          # Initialize README if missing
+          # Create README if missing
           if [ ! -f README.md ]; then
             cat > README.md << 'EOF'
             # susfs4ksu (Fork)
             
-            This repository mirrors all upstream branches from susfs4ksu,
+            This repository mirrors all upstream branches from **susfs4ksu**,
             except for the `wild` branch.
             
             ## Branches
@@ -89,9 +93,9 @@ jobs:
 
           REPORT=""
           for branch in $UPSTREAM_BRANCHES; do
-            COMMIT=$(git rev-parse upstream/$branch)
+            COMMIT=$(git rev-parse "upstream/$branch")
             SHORT=${COMMIT:0:7}
-            MESSAGE=$(git log -1 --pretty=%s upstream/$branch)
+            MESSAGE=$(git log -1 --pretty=%s "upstream/$branch")
             LINK="https://gitlab.com/simonpunk/susfs4ksu/-/commit/$COMMIT"
 
             REPORT="$REPORT- \`$branch\`: [$SHORT]($LINK) — $MESSAGE\n"
