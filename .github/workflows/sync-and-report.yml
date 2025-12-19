@@ -27,21 +27,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          # List upstream branches safely (no HEAD, no phantom refs)
           UPSTREAM_BRANCHES=$(git for-each-ref \
             --format='%(refname:lstrip=3)' \
             refs/remotes/upstream \
             | grep -v '^HEAD$' \
             | grep -v '^wild$')
 
-          # List origin branches safely (no HEAD, no phantom refs)
           ORIGIN_BRANCHES=$(git for-each-ref \
             --format='%(refname:lstrip=3)' \
             refs/remotes/origin \
             | grep -v '^HEAD$' \
             | grep -v '^wild$')
 
-          # Sync or create branches
           for branch in $UPSTREAM_BRANCHES; do
             echo "Syncing $branch"
 
@@ -55,7 +52,6 @@ jobs:
             git push origin "$branch" --force
           done
 
-          # Delete branches removed upstream
           for branch in $ORIGIN_BRANCHES; do
             if ! echo "$UPSTREAM_BRANCHES" | grep -qx "$branch"; then
               echo "Deleting stale branch $branch"
@@ -67,26 +63,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Checkout wild (never synced)
           if git show-ref --verify --quiet refs/heads/wild; then
             git checkout wild
           else
             git checkout -b wild
           fi
 
-          # Create README if missing
           if [ ! -f README.md ]; then
-            cat > README.md << 'EOF'
-            # susfs4ksu (Fork)
-            
-            This repository mirrors all upstream branches from **susfs4ksu**,
-            except for the `wild` branch.
-            
-            ## Branches
-            
-            <!-- BRANCH-LIST-START -->
-            <!-- BRANCH-LIST-END -->
-            EOF
+          cat > README.md <<'EOF'
+          # susfs4ksu (Fork)
+          
+          This repository mirrors all upstream branches from **susfs4ksu**,
+          except for the `wild` branch.
+          
+          ## Branches
+          
+          <!-- BRANCH-LIST-START -->
+          <!-- BRANCH-LIST-END -->
+          EOF
           fi
 
           REPORT=""
