@@ -1,10 +1,12 @@
 name: Sync susfs4ksu branches and update README
+
 on:
   workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,93 +20,83 @@ jobs:
 
       - name: Add upstream repository
         run: |
-          git remote add upstream https://gitlab.com/simonpunk/susfs4ksu.git || true
+          git remote add upstream https://github.com/sidex15/susfs4ksu.git || true
           git fetch upstream --prune
 
-      - name: Mirror upstream branches (exclude wild)
+      - name: Sync branches (mirror upstream, exclude wild)
         run: |
           set -euo pipefail
-          
-          UPSTREAM_BRANCHES=$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream \
-            | grep -v '^HEAD$' \
-            | grep -v '^wild$')
-          
-          ORIGIN_BRANCHES=$(git for-each-ref \
-            --format='%(refname:lstrip=3)' \
-            refs/remotes/origin \
-            | grep -v '^HEAD$' \
-            | grep -v '^wild$')
-          
-          echo "Upstream branches to sync:"
-          echo "$UPSTREAM_BRANCHES"
-          
+
+          # Get upstream branch list (excluding wild)
+          UPSTREAM_BRANCHES=$(git branch -r --list 'upstream/*' --format='%(refname:short)' | sed 's|upstream/||' | grep -v '^HEAD$' | grep -v '^wild$')
+
+          # Sync / create branches
           for branch in $UPSTREAM_BRANCHES; do
             echo "Syncing $branch"
-            if git show-ref --verify --quiet "refs/heads/$branch"; then
-              git checkout "$branch"
+
+            if git show-ref --verify --quiet refs/heads/$branch; then
+              git checkout $branch
             else
-              git checkout -b "$branch" "upstream/$branch"
+              git checkout -b $branch upstream/$branch
             fi
-            git reset --hard "upstream/$branch"
-            git push origin "$branch" --force
+
+            git reset --hard upstream/$branch
+            git push origin $branch --force
           done
-          
+
+          # Delete branches removed upstream
+          ORIGIN_BRANCHES=$(git branch -r --list 'origin/*' --format='%(refname:short)' | sed 's|origin/||' | grep -v '^HEAD$' | grep -v '^wild$')
+
           for branch in $ORIGIN_BRANCHES; do
             if ! echo "$UPSTREAM_BRANCHES" | grep -qx "$branch"; then
               echo "Deleting stale branch $branch"
-              git push origin --delete "$branch" || true
+              git push origin --delete "$branch"
             fi
           done
 
       - name: Update README on wild
         run: |
           set -euo pipefail
-          
-          UPSTREAM_BRANCHES=$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/upstream \
-            | grep -v '^HEAD$' \
-            | grep -v '^wild$')
-          
+
+          # Re-fetch upstream branches list for report
+          UPSTREAM_BRANCHES=$(git branch -r --list 'upstream/*' --format='%(refname:short)' | sed 's|upstream/||' | grep -v '^HEAD$' | grep -v '^wild$')
+
+          # Checkout wild (never synced from upstream)
           if git show-ref --verify --quiet refs/heads/wild; then
             git checkout wild
           else
             git checkout -b wild
           fi
-          
-          if [ ! -f README.md ]; then
-            cat > README.md <<'EOF'
-            # susfs4ksu (Fork)
-            
-            This repository mirrors all upstream branches from **susfs4ksu**,
-            except for the `wild` branch.
-            
-            ## Branches
-            
-            <!-- BRANCH-LIST-START -->
-            <!-- BRANCH-LIST-END -->
-            EOF
-          fi
-          
-          REPORT=""
+
+          # Generate README
+          cat > README.md << 'EOF'
+          # susfs4ksu (Fork)
+
+          This is a fork of [susfs4ksu](https://github.com/sidex15/susfs4ksu).
+
+          This repository mirrors all upstream branches 1:1, except for the `wild` branch.
+
+          ## Branches
+
+          <!-- BRANCH-LIST-START -->
+          EOF
+
           for branch in $UPSTREAM_BRANCHES; do
-            COMMIT=$(git rev-parse "upstream/$branch")
+            COMMIT=$(git rev-parse upstream/$branch)
             SHORT=${COMMIT:0:7}
-            MESSAGE=$(git log -1 --pretty=%s "upstream/$branch")
-            LINK="https://gitlab.com/simonpunk/susfs4ksu/-/commit/$COMMIT"
-            REPORT="$REPORT- \`$branch\`: [$SHORT]($LINK) — $MESSAGE\n"
+            MESSAGE=$(git log -1 --pretty=%s upstream/$branch)
+            MESSAGE=$(echo "$MESSAGE" | sed 's/`/\\`/g')
+            LINK="https://github.com/sidex15/susfs4ksu/commit/$COMMIT"
+
+            echo "- \`$branch\`: [$SHORT]($LINK) — $MESSAGE" >> README.md
           done
-          
-          awk -v report="$REPORT" '
-            /<!-- BRANCH-LIST-START -->/ {
-              print
-              printf "%s", report
-              skip=1
-              next
-            }
-            /<!-- BRANCH-LIST-END -->/ { skip=0 }
-            !skip { print }
-          ' README.md > README.tmp
-          
-          mv README.tmp README.md
+
+          echo "<!-- BRANCH-LIST-END -->" >> README.md
+
           git add README.md
-          git commit -m "Update branch commit report" || echo "No changes to README"
-          git push origin wild
+          if git diff --staged --quiet; then
+            echo "No README changes"
+          else
+            git commit -m "Update branch commit report"
+            git push origin wild
+          fi
